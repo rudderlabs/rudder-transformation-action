@@ -86,9 +86,9 @@ async function test() {
     );
     console.log(res.data);
   } catch (err) {
-    if (error.response) {
-      console.log(error.response.data);
-      console.log(error.response.status);
+    if (err.response) {
+      console.log(err.response.data);
+      console.log(err.response.status);
       core.error(err);
     }
   }
