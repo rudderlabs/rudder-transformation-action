@@ -3133,6 +3133,7 @@ async function test() {
     );
     console.log(res.data);
   } catch (err) {
+    console.log(err);
     core.error(err);
   }
 }
