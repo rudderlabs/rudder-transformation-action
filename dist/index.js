@@ -3102,13 +3102,13 @@ async function test() {
   const libraryDict = {};
 
   try {
-    transformations.forEach(async tr => {
+    await transformations.forEach(async tr => {
       let code = fs.readFileSync(tr.file, "utf-8");
       let res = await createTransformer(tr.name, tr.description, code);
       transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
     });
 
-    libraries.forEach(async lib => {
+    await libraries.forEach(async lib => {
       let code = fs.readFileSync(lib.file, "utf-8");
       let res = await createLibrary(lib.name, lib.description, code);
       libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
@@ -3117,7 +3117,7 @@ async function test() {
     let transformationTest = [];
     let librariesTest = [];
 
-    Object.keys(transformationDict).forEach(trVersionId => {
+    await Object.keys(transformationDict).forEach(async trVersionId => {
       let testInputPath = transformationDict[trVersionId]["test-input-file"];
       let testInput = JSON.parse(fs.readFileSync(testInputPath));
       transformationTest.push({ versionId: trVersionId, testInput });
