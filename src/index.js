@@ -19,36 +19,63 @@ async function test() {
   const libraryDict = {};
 
   try {
-    await transformations.forEach(async tr => {
+    for (let i = 0; i < transformations.length; i++) {
+      let tr = transformations[i];
       let code = fs.readFileSync(tr.file, "utf-8");
       let res = await createTransformer(tr.name, tr.description, code);
       transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
       console.log("creating transformation");
-    });
+    }
+
+    // await transformations.forEach(async tr => {
+    //   let code = fs.readFileSync(tr.file, "utf-8");
+    //   let res = await createTransformer(tr.name, tr.description, code);
+    //   transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
+    //   console.log("creating transformation");
+    // });
 
     console.log("transformation done!");
 
-    await libraries.forEach(async lib => {
+    for (let i = 0; i < libraries.length; i++) {
+      let lib = libraries[i];
       let code = fs.readFileSync(lib.file, "utf-8");
       let res = await createLibrary(lib.name, lib.description, code);
       libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
-      console.log("creatingg library");
-    });
+      console.log("creating library");
+    }
+
+    // await libraries.forEach(async lib => {
+    //   let code = fs.readFileSync(lib.file, "utf-8");
+    //   let res = await createLibrary(lib.name, lib.description, code);
+    //   libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
+    //   console.log("creatingg library");
+    // });
 
     console.log("library done!");
 
     let transformationTest = [];
     let librariesTest = [];
 
-    await Object.keys(transformationDict).forEach(async trVersionId => {
+    for (let i = 0; i < Object.keys(transformationDict).length; i++) {
+      let trVersionId = Object.keys(transformationDict)[i];
       let testInputPath = transformationDict[trVersionId]["test-input-file"];
       let testInput = JSON.parse(fs.readFileSync(testInputPath));
       transformationTest.push({ versionId: trVersionId, testInput });
-    });
+    }
 
-    Object.keys(libraryDict).forEach(libVersionId => {
-      librariesTest.push({ versionId: libVersionId });
-    });
+    // await Object.keys(transformationDict).forEach(async trVersionId => {
+    //   let testInputPath = transformationDict[trVersionId]["test-input-file"];
+    //   let testInput = JSON.parse(fs.readFileSync(testInputPath));
+    //   transformationTest.push({ versionId: trVersionId, testInput });
+    // });
+
+    for (let i = 0; i < Object.keys(libraryDict).length; i++) {
+      librariesTest.push({ versionId: Object.keys(libraryDict)[i] });
+    }
+
+    // Object.keys(libraryDict).forEach(libVersionId => {
+    //   librariesTest.push({ versionId: libVersionId });
+    // });
 
     console.log("final transformation------", transformationTest);
     console.log("final library-----", librariesTest);
@@ -57,7 +84,7 @@ async function test() {
       transformationTest,
       librariesTest
     );
-    //console.log(res.data);
+    console.log(res.data);
   } catch (err) {
     console.log(err);
     core.error(err);
