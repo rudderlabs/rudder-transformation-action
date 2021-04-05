@@ -1,0 +1,19 @@
+name: 'Rudder Transformer Test'
+description: 'Test user transformations'
+inputs:
+    metaPath:
+        description: 'File containing transformation and libraries meta'
+        required: true
+    email:
+        description: 'email'
+        required: true
+    accessToken:
+        description: 'token'
+        required: true
+    serverEndpoint:
+        description: 'backend url'
+        required: true
+        default: 'https://api.rudderlabs.com'
+runs:
+    using: 'node12'
+    main: 'dist/index.js'
