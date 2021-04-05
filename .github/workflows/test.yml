@@ -14,5 +14,5 @@ jobs:
         with:
           metaPath: './code/meta.json'
           email: 'sayan+10@rudderlabs.com'
-          accessToken: '1q6uMVEyyRHTPXvk7VIcT0NoISU'
+          accessKey: '1q6uMVEyyRHTPXvk7VIcT0NoISU'
           serverEndpoint: 'https://ccef2688f00e.ngrok.io'
