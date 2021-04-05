@@ -2,8 +2,8 @@
   "transformations": [
     {
       "file": "./code/code.js",
-      "name": "action-T1",
-      "description": "action-T1",
+      "name": "action-T10",
+      "description": "action-T10",
       "type": "transformation",
       "test-input-file": "./code/events.json",
       "expected-output": "./code/expected.json"
@@ -12,13 +12,13 @@
   "libraries": [
     {
       "file": "./code/lib1.js",
-      "name": "getFinanceData1",
+      "name": "getFinanceData10",
       "description": "action-lib",
       "type": "library"
     },
     {
       "file": "./code/lib2.js",
-      "name": "getUserAddress1",
+      "name": "getUserAddress10",
       "description": "action-lib",
       "type": "library"
     }

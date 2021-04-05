@@ -1,5 +1,5 @@
-import { getRevenue, getPrice, getProfit } from "getFinanceData1";
-import { getCity, getCountry, getStreet } from "getUserAddress1";
+import { getRevenue, getPrice, getProfit } from "getFinanceData10";
+import { getCity, getCountry, getStreet } from "getUserAddress10";
 export function transformEvent(events) {
   return {
     revenue: getRevenue(events.properties),
