@@ -86,8 +86,11 @@ async function test() {
     );
     console.log(res.data);
   } catch (err) {
-    console.log(err);
-    core.error(err);
+    if (error.response) {
+      console.log(error.response.data);
+      console.log(error.response.status);
+      core.error(err);
+    }
   }
 }
 
