@@ -84,7 +84,7 @@ async function test() {
       transformationTest,
       librariesTest
     );
-    console.log(res.data);
+    console.log(JSON.stringify(res.data));
   } catch (err) {
     if (err.response) {
       console.log(err.response.data);
