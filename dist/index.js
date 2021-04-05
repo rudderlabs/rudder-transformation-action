@@ -3018,7 +3018,7 @@ const core = __nccwpck_require__(2186);
 const serverEndpoint = core.getInput("serverEndpoint");
 const createTransformerEndpoint = `${serverEndpoint}/transformations`;
 const createLibraryEndpoint = `${serverEndpoint}/libraries`;
-const testEndpoint = `${serverEndpoint}/transformations/libraries/publish`;
+const testEndpoint = `${serverEndpoint}/transformations/libraries/test`;
 
 async function createTransformer(name, description, code) {
   //console.log(code)
