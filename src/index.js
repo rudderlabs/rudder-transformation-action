@@ -71,7 +71,7 @@ async function testAndPublish() {
       if (transformationNameToId[tr.name]) {
         // update existing transformer and get a new versionId
         let id = transformationNameToId[tr.name];
-        res = await updateTransformer(id, tr.description, tr.code);
+        res = await updateTransformer(id, tr.description, code);
       } else {
         // create new transformer
         res = await createTransformer(tr.name, tr.description, code);
