@@ -20,8 +20,8 @@ const metaFilePath = core.getInput("metaPath");
 const { transformations, libraries } = JSON.parse(
   fs.readFileSync(metaFilePath, "utf-8")
 );
-console.log("---transformations---", transformations);
-console.log("----libraries---", libraries);
+core.info("transformations from meta: ", transformations);
+core.info("libraries from meta: ", libraries);
 
 const serverList = {
   transformations: [],
@@ -62,7 +62,10 @@ async function testAndPublish() {
   const libraryDict = {};
 
   try {
+    core.info("Initilaizing...");
     await init();
+
+    core.info("list of transformations and libraries successfully fetched");
 
     for (let i = 0; i < transformations.length; i++) {
       let tr = transformations[i];
@@ -77,10 +80,10 @@ async function testAndPublish() {
         res = await createTransformer(tr.name, tr.description, code);
       }
       transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
-      console.log("creating transformation");
+      core.info("create/update transformation");
     }
 
-    console.log("transformation done!");
+    core.info("transformations create/update done!");
 
     for (let i = 0; i < libraries.length; i++) {
       let lib = libraries[i];
@@ -95,10 +98,10 @@ async function testAndPublish() {
         res = await createLibrary(lib.name, lib.description, code);
       }
       libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
-      console.log("creating library");
+      core.info("create/update library");
     }
 
-    console.log("library done!");
+    core.info("libraries create/update done!");
 
     let transformationTest = [];
     let librariesTest = [];
@@ -114,17 +117,23 @@ async function testAndPublish() {
       librariesTest.push({ versionId: Object.keys(libraryDict)[i] });
     }
 
-    console.log("final transformation------", transformationTest);
-    console.log("final library-----", librariesTest);
+    core.info(
+      "final transformation versions to be tested: ",
+      transformationTest
+    );
+    core.info("final library versions to be tested:", librariesTest);
+
+    core.info("Running test...");
 
     let res = await testTransformationAndLibrary(
       transformationTest,
       librariesTest
     );
-    console.log(JSON.stringify(res.data));
+    core.info(`Test api output: ${JSON.stringify(res.data)}`);
 
     // upload artifact
     if (uploadTestArtifact) {
+      core.info("Uploading test api output...");
       fs.writeFileSync("test-results.json", JSON.stringify(res.data));
       await artifactClient.uploadArtifact(
         "transformer-test-results",
@@ -133,6 +142,7 @@ async function testAndPublish() {
       );
     }
 
+    core.info("Comparing api output with expected output...");
     if (res.data.result.failedTestResults.length > 0) {
       throw new Error(
         "There are failures in running the set aggainst input events"
@@ -163,16 +173,15 @@ async function testAndPublish() {
     }
 
     // test passed
-    console.log("Test Passed!!!");
+    core.info("Test Passed!!!");
 
     // publish
-
     res = await publish(transformationTest, librariesTest);
-    console.log(res.data);
+    core.info(`Publish result: ${res.data}`);
   } catch (err) {
     if (err.response) {
-      console.log(err.response.data);
-      console.log(err.response.status);
+      core.error(err.response.data);
+      core.error(err.response.status);
     }
     core.setFailed(err);
   }
