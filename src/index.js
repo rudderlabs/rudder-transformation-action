@@ -171,8 +171,8 @@ async function testAndPublish() {
     if (err.response) {
       console.log(err.response.data);
       console.log(err.response.status);
-      core.setFailed(err);
     }
+    core.setFailed(err);
   }
 }
 
