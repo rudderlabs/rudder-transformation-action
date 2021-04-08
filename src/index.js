@@ -118,10 +118,10 @@ async function testAndPublish() {
     }
 
     core.info(
-      "final transformation versions to be tested: ",
-      transformationTest
+      `final transformation versions to be tested: 
+      ${transformationTest}`
     );
-    core.info("final library versions to be tested:", librariesTest);
+    core.info(`final library versions to be tested: ${librariesTest}`);
 
     core.info("Running test...");
 
@@ -177,7 +177,7 @@ async function testAndPublish() {
 
     // publish
     res = await publish(transformationTest, librariesTest);
-    core.info(`Publish result: ${res.data}`);
+    core.info(`Publish result: ${JSON.stringify(res.data)}`);
   } catch (err) {
     if (err.response) {
       core.error(err.response.data);
