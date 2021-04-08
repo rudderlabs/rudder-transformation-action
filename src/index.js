@@ -20,8 +20,8 @@ const metaFilePath = core.getInput("metaPath");
 const { transformations, libraries } = JSON.parse(
   fs.readFileSync(metaFilePath, "utf-8")
 );
-core.info("transformations from meta: ", transformations);
-core.info("libraries from meta: ", libraries);
+core.info(`transformations from meta:  ${JSON.stringify(transformations)}`);
+core.info(`libraries from meta: ${JSON.stringify(libraries)}`);
 
 const serverList = {
   transformations: [],
@@ -119,9 +119,11 @@ async function testAndPublish() {
 
     core.info(
       `final transformation versions to be tested: 
-      ${transformationTest}`
+      ${JSON.stringify(transformationTest)}`
     );
-    core.info(`final library versions to be tested: ${librariesTest}`);
+    core.info(
+      `final library versions to be tested: ${JSON.stringify(librariesTest)}`
+    );
 
     core.info("Running test...");
 
