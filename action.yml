@@ -1,4 +1,4 @@
-name: 'Rudder Transformer Test'
+name: 'Rudder Transformer Test and Publish'
 description: 'Test user transformations'
 inputs:
     metaPath:
@@ -14,6 +14,9 @@ inputs:
         description: 'backend url'
         required: true
         default: 'https://api.rudderlabs.com'
+    uploadTestArtifact:
+        description: 'upload test results'
+        required: false
 runs:
     using: 'node12'
     main: 'dist/index.js'

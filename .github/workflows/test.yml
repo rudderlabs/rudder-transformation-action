@@ -16,3 +16,4 @@ jobs:
           email: 'sayan+10@rudderlabs.com'
           accessKey: '1q6uMVEyyRHTPXvk7VIcT0NoISU'
           serverEndpoint: 'https://ccef2688f00e.ngrok.io'
+          uploadTestArtifact: true
