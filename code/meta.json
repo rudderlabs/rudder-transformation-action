@@ -6,7 +6,7 @@
       "description": "action-T13",
       "type": "transformation",
       "test-input-file": "./code/events.json",
-      "expected-output": "./code/expected.json"
+      "expected-output": "./code/expected-incorrect.json"
     }
   ],
   "libraries": [
