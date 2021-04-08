@@ -49,7 +49,10 @@ async function init() {
     ? JSON.parse(JSON.stringify(res.data.transformations))
     : [];
   res = await getAllLibraries();
-  serverList.libraries = res.data ? JSON.parse(JSON.stringify(res.data)) : [];
+  serverList.libraries = res.data
+    ? JSON.parse(JSON.stringify(res.data.libraries))
+    : [];
+
   buildNametoIdMap(serverList.transformations, "tr");
   buildNametoIdMap(serverList.libraries, "lib");
 }
@@ -58,9 +61,9 @@ async function testAndPublish() {
   const transformationDict = {};
   const libraryDict = {};
 
-  await init();
-
   try {
+    await init();
+
     for (let i = 0; i < transformations.length; i++) {
       let tr = transformations[i];
       let code = fs.readFileSync(tr.file, "utf-8");
