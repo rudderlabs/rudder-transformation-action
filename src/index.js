@@ -155,7 +155,9 @@ async function testAndPublish() {
       let apiOutput = successResults[i].result.output;
       if (!isEqual(expectedOutput, apiOutput)) {
         throw new Error(
-          `${successResults[i].transformerVersionID} outputs don't match`
+          `Transformer name: ${
+            transformationDict[successResults[i].transformerVersionID].name
+          } test outputs don't match`
         );
       }
     }
