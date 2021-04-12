@@ -2,7 +2,7 @@ const core = require("@actions/core");
 const fs = require("fs");
 const isEqual = require("lodash/isEqual");
 const artifact = require("@actions/artifact");
-const { diff } = require("deep-object-diff");
+const { detailedDiff } = require("deep-object-diff");
 const artifactClient = artifact.create();
 const {
   getAllTransformations,
@@ -187,7 +187,7 @@ async function testAndPublish() {
 
         fs.writeFileSync(
           `${testOutputDir}/${transformationName}_diff.json`,
-          JSON.stringify(diff(expectedOutput, apiOutput))
+          JSON.stringify(detailedDiff(expectedOutput, apiOutput))
         );
 
         testOutputFiles.push(

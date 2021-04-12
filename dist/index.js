@@ -13739,7 +13739,7 @@ const core = __nccwpck_require__(2186);
 const fs = __nccwpck_require__(5747);
 const isEqual = __nccwpck_require__(52);
 const artifact = __nccwpck_require__(2605);
-const { diff } = __nccwpck_require__(4933);
+const { detailedDiff } = __nccwpck_require__(4933);
 const artifactClient = artifact.create();
 const {
   getAllTransformations,
@@ -13924,7 +13924,7 @@ async function testAndPublish() {
 
         fs.writeFileSync(
           `${testOutputDir}/${transformationName}_diff.json`,
-          JSON.stringify(diff(expectedOutput, apiOutput))
+          JSON.stringify(detailedDiff(expectedOutput, apiOutput))
         );
 
         testOutputFiles.push(
