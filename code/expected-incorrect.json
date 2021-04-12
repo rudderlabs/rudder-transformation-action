@@ -4,7 +4,7 @@
     "price": 0,
     "profit": 0,
     "city": "kolkata",
-    "country": "no data found",
+    "country": ["no data found"],
     "street": "no data found"
   }
 ]
