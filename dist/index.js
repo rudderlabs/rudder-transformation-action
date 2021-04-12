@@ -13814,12 +13814,13 @@ async function testAndPublish() {
         // update existing transformer and get a new versionId
         let id = transformationNameToId[tr.name];
         res = await updateTransformer(id, tr.description, code);
+        core.info(`updated transformation: ${tr.name}`);
       } else {
         // create new transformer
         res = await createTransformer(tr.name, tr.description, code);
+        core.info(`created transformation: ${tr.name}`);
       }
       transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
-      core.info("create/update transformation");
     }
 
     core.info("transformations create/update done!");
@@ -13832,12 +13833,13 @@ async function testAndPublish() {
         // update library and get a new versionId
         let id = libraryNameToId[lib.name];
         res = await updateLibrary(id, lib.description, code);
+        core.info(`updated library: ${lib.name}`);
       } else {
         // create a new library
         res = await createLibrary(lib.name, lib.description, code);
+        core.info(`created library: ${lib.name}`);
       }
       libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
-      core.info("create/update library");
     }
 
     core.info("libraries create/update done!");
