@@ -9,7 +9,7 @@
       "expected-output": "./code/expected.json"
     },
     {
-      "file": "./code/code-2.js",
+      "file": "./code/code_2.js",
       "name": "action-T13_2",
       "description": "action-T13_2",
       "type": "transformation",
