@@ -137,8 +137,9 @@ async function testAndPublish() {
 
     core.info("Comparing api output with expected output...");
     if (res.data.result.failedTestResults.length > 0) {
+      core.info(JSON.stringify(res.data.result.failedTestResults));
       throw new Error(
-        "There are failures in running the set aggainst input events"
+        "There are failures in running the set against input events"
       );
     }
 
