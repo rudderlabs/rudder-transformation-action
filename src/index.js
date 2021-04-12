@@ -2,6 +2,7 @@ const core = require("@actions/core");
 const fs = require("fs");
 const isEqual = require("lodash/isEqual");
 const artifact = require("@actions/artifact");
+const { diff } = require("deep-object-diff");
 const artifactClient = artifact.create();
 const {
   getAllTransformations,
@@ -14,6 +15,7 @@ const {
   publish
 } = require("./apiCalls");
 
+const testOutputDir = "./test-outputs";
 const uploadTestArtifact = core.getInput("uploadTestArtifact") || false;
 const metaFilePath = core.getInput("metaPath");
 
@@ -133,17 +135,6 @@ async function testAndPublish() {
     );
     core.info(`Test api output: ${JSON.stringify(res.data)}`);
 
-    // upload artifact
-    if (uploadTestArtifact) {
-      core.info("Uploading test api output...");
-      fs.writeFileSync("test-results.json", JSON.stringify(res.data));
-      await artifactClient.uploadArtifact(
-        "transformer-test-results",
-        ["test-results.json"],
-        "."
-      );
-    }
-
     core.info("Comparing api output with expected output...");
     if (res.data.result.failedTestResults.length > 0) {
       throw new Error(
@@ -153,6 +144,11 @@ async function testAndPublish() {
 
     let successResults = res.data.result.successTestResults;
 
+    let errorResults = [];
+    let testOutputFiles = [];
+    if (!fs.existsSync(testOutputDir)) {
+      fs.mkdirSync(testOutputDir);
+    }
     for (let i = 0; i < successResults.length; i++) {
       let expectedOutputfile =
         transformationDict[successResults[i].transformerVersionID][
@@ -161,17 +157,50 @@ async function testAndPublish() {
       let expectedOutput = expectedOutputfile
         ? JSON.parse(fs.readFileSync(expectedOutputfile))
         : "";
+
+      let apiOutput = successResults[i].result.output;
+
+      let transformationName =
+        transformationDict[successResults[i].transformerVersionID].name;
+
+      fs.writeFileSync(
+        `${testOutputDir}/${transformationName}-output.json`,
+        JSON.stringify(apiOutput)
+      );
+      testOutputFiles.push(`${transformationName}-output.json`);
+
       if (expectedOutput == "") {
         continue;
       }
-      let apiOutput = successResults[i].result.output;
+
       if (!isEqual(expectedOutput, apiOutput)) {
-        throw new Error(
+        errorResults.push(
           `Transformer name: ${
             transformationDict[successResults[i].transformerVersionID].name
           } test outputs don't match`
         );
+
+        fs.writeFileSync(
+          `${testOutputDir}/${transformationName}-diff.json`,
+          diff(expectedOutput, apiOutput)
+        );
+
+        testOutputFiles.push(`${transformationName}-diff.json`);
       }
+    }
+
+    // upload artifact
+    if (uploadTestArtifact) {
+      core.info("Uploading test api output...");
+      await artifactClient.uploadArtifact(
+        "transformer-test-results",
+        testOutputFiles,
+        testOutputDir
+      );
+    }
+
+    if (errorResults.length > 0) {
+      throw new Error(errorResults.join(", "));
     }
 
     // test passed

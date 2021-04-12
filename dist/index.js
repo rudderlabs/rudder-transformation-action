@@ -5112,6 +5112,446 @@ var isArray = Array.isArray || function (xs) {
 
 /***/ }),
 
+/***/ 1705:
+/***/ (function(module, exports, __nccwpck_require__) {
+
+/* module decorator */ module = __nccwpck_require__.nmd(module);
+(function (global, factory) {
+  if (typeof define === "function" && define.amd) {
+    define(['module', 'exports', '../utils'], factory);
+  } else if (true) {
+    factory(module, exports, __nccwpck_require__(7049));
+  } else { var mod; }
+})(this, function (module, exports, _utils) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  function _defineProperty(obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  }
+
+  var _extends = Object.assign || function (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+
+    return target;
+  };
+
+  var addedDiff = function addedDiff(lhs, rhs) {
+
+    if (lhs === rhs || !(0, _utils.isObject)(lhs) || !(0, _utils.isObject)(rhs)) return {};
+
+    var l = (0, _utils.properObject)(lhs);
+    var r = (0, _utils.properObject)(rhs);
+
+    return Object.keys(r).reduce(function (acc, key) {
+      if (l.hasOwnProperty(key)) {
+        var difference = addedDiff(l[key], r[key]);
+
+        if ((0, _utils.isObject)(difference) && (0, _utils.isEmpty)(difference)) return acc;
+
+        return _extends({}, acc, _defineProperty({}, key, difference));
+      }
+
+      return _extends({}, acc, _defineProperty({}, key, r[key]));
+    }, {});
+  };
+
+  exports.default = addedDiff;
+  module.exports = exports['default'];
+});
+
+/***/ }),
+
+/***/ 9189:
+/***/ (function(module, exports, __nccwpck_require__) {
+
+/* module decorator */ module = __nccwpck_require__.nmd(module);
+(function (global, factory) {
+  if (typeof define === "function" && define.amd) {
+    define(['module', 'exports', '../utils'], factory);
+  } else if (true) {
+    factory(module, exports, __nccwpck_require__(7049));
+  } else { var mod; }
+})(this, function (module, exports, _utils) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  function _defineProperty(obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  }
+
+  var _extends = Object.assign || function (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+
+    return target;
+  };
+
+  var deletedDiff = function deletedDiff(lhs, rhs) {
+    if (lhs === rhs || !(0, _utils.isObject)(lhs) || !(0, _utils.isObject)(rhs)) return {};
+
+    var l = (0, _utils.properObject)(lhs);
+    var r = (0, _utils.properObject)(rhs);
+
+    return Object.keys(l).reduce(function (acc, key) {
+      if (r.hasOwnProperty(key)) {
+        var difference = deletedDiff(l[key], r[key]);
+
+        if ((0, _utils.isObject)(difference) && (0, _utils.isEmpty)(difference)) return acc;
+
+        return _extends({}, acc, _defineProperty({}, key, difference));
+      }
+
+      return _extends({}, acc, _defineProperty({}, key, undefined));
+    }, {});
+  };
+
+  exports.default = deletedDiff;
+  module.exports = exports['default'];
+});
+
+/***/ }),
+
+/***/ 3435:
+/***/ (function(module, exports, __nccwpck_require__) {
+
+/* module decorator */ module = __nccwpck_require__.nmd(module);
+(function (global, factory) {
+  if (typeof define === "function" && define.amd) {
+    define(['module', 'exports', '../added', '../deleted', '../updated'], factory);
+  } else if (true) {
+    factory(module, exports, __nccwpck_require__(1705), __nccwpck_require__(9189), __nccwpck_require__(3836));
+  } else { var mod; }
+})(this, function (module, exports, _added, _deleted, _updated) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _added2 = _interopRequireDefault(_added);
+
+  var _deleted2 = _interopRequireDefault(_deleted);
+
+  var _updated2 = _interopRequireDefault(_updated);
+
+  function _interopRequireDefault(obj) {
+    return obj && obj.__esModule ? obj : {
+      default: obj
+    };
+  }
+
+  var detailedDiff = function detailedDiff(lhs, rhs) {
+    return {
+      added: (0, _added2.default)(lhs, rhs),
+      deleted: (0, _deleted2.default)(lhs, rhs),
+      updated: (0, _updated2.default)(lhs, rhs)
+    };
+  };
+
+  exports.default = detailedDiff;
+  module.exports = exports['default'];
+});
+
+/***/ }),
+
+/***/ 4471:
+/***/ (function(module, exports, __nccwpck_require__) {
+
+/* module decorator */ module = __nccwpck_require__.nmd(module);
+(function (global, factory) {
+  if (typeof define === "function" && define.amd) {
+    define(['module', 'exports', '../utils'], factory);
+  } else if (true) {
+    factory(module, exports, __nccwpck_require__(7049));
+  } else { var mod; }
+})(this, function (module, exports, _utils) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  function _defineProperty(obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  }
+
+  var _extends = Object.assign || function (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+
+    return target;
+  };
+
+  var diff = function diff(lhs, rhs) {
+    if (lhs === rhs) return {}; // equal return no diff
+
+    if (!(0, _utils.isObject)(lhs) || !(0, _utils.isObject)(rhs)) return rhs; // return updated rhs
+
+    var l = (0, _utils.properObject)(lhs);
+    var r = (0, _utils.properObject)(rhs);
+
+    var deletedValues = Object.keys(l).reduce(function (acc, key) {
+      return r.hasOwnProperty(key) ? acc : _extends({}, acc, _defineProperty({}, key, undefined));
+    }, {});
+
+    if ((0, _utils.isDate)(l) || (0, _utils.isDate)(r)) {
+      if (l.valueOf() == r.valueOf()) return {};
+      return r;
+    }
+
+    return Object.keys(r).reduce(function (acc, key) {
+      if (!l.hasOwnProperty(key)) return _extends({}, acc, _defineProperty({}, key, r[key])); // return added r key
+
+      var difference = diff(l[key], r[key]);
+
+      if ((0, _utils.isObject)(difference) && (0, _utils.isEmpty)(difference) && !(0, _utils.isDate)(difference)) return acc; // return no diff
+
+      return _extends({}, acc, _defineProperty({}, key, difference)); // return updated key
+    }, deletedValues);
+  };
+
+  exports.default = diff;
+  module.exports = exports['default'];
+});
+
+/***/ }),
+
+/***/ 4933:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+(function (global, factory) {
+  if (typeof define === "function" && define.amd) {
+    define(['exports', './diff', './added', './deleted', './updated', './detailed'], factory);
+  } else if (true) {
+    factory(exports, __nccwpck_require__(4471), __nccwpck_require__(1705), __nccwpck_require__(9189), __nccwpck_require__(3836), __nccwpck_require__(3435));
+  } else { var mod; }
+})(this, function (exports, _diff, _added, _deleted, _updated, _detailed) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.detailedDiff = exports.updatedDiff = exports.deletedDiff = exports.diff = exports.addedDiff = undefined;
+
+  var _diff2 = _interopRequireDefault(_diff);
+
+  var _added2 = _interopRequireDefault(_added);
+
+  var _deleted2 = _interopRequireDefault(_deleted);
+
+  var _updated2 = _interopRequireDefault(_updated);
+
+  var _detailed2 = _interopRequireDefault(_detailed);
+
+  function _interopRequireDefault(obj) {
+    return obj && obj.__esModule ? obj : {
+      default: obj
+    };
+  }
+
+  exports.addedDiff = _added2.default;
+  exports.diff = _diff2.default;
+  exports.deletedDiff = _deleted2.default;
+  exports.updatedDiff = _updated2.default;
+  exports.detailedDiff = _detailed2.default;
+});
+
+/***/ }),
+
+/***/ 3836:
+/***/ (function(module, exports, __nccwpck_require__) {
+
+/* module decorator */ module = __nccwpck_require__.nmd(module);
+(function (global, factory) {
+  if (typeof define === "function" && define.amd) {
+    define(['module', 'exports', '../utils'], factory);
+  } else if (true) {
+    factory(module, exports, __nccwpck_require__(7049));
+  } else { var mod; }
+})(this, function (module, exports, _utils) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  function _defineProperty(obj, key, value) {
+    if (key in obj) {
+      Object.defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+
+    return obj;
+  }
+
+  var _extends = Object.assign || function (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+
+    return target;
+  };
+
+  var updatedDiff = function updatedDiff(lhs, rhs) {
+
+    if (lhs === rhs) return {};
+
+    if (!(0, _utils.isObject)(lhs) || !(0, _utils.isObject)(rhs)) return rhs;
+
+    var l = (0, _utils.properObject)(lhs);
+    var r = (0, _utils.properObject)(rhs);
+
+    if ((0, _utils.isDate)(l) || (0, _utils.isDate)(r)) {
+      if (l.valueOf() == r.valueOf()) return {};
+      return r;
+    }
+
+    return Object.keys(r).reduce(function (acc, key) {
+
+      if (l.hasOwnProperty(key)) {
+        var difference = updatedDiff(l[key], r[key]);
+
+        if ((0, _utils.isObject)(difference) && (0, _utils.isEmpty)(difference) && !(0, _utils.isDate)(difference)) return acc;
+
+        return _extends({}, acc, _defineProperty({}, key, difference));
+      }
+
+      return acc;
+    }, {});
+  };
+
+  exports.default = updatedDiff;
+  module.exports = exports['default'];
+});
+
+/***/ }),
+
+/***/ 7049:
+/***/ (function(__unused_webpack_module, exports) {
+
+(function (global, factory) {
+  if (typeof define === "function" && define.amd) {
+    define(['exports'], factory);
+  } else if (true) {
+    factory(exports);
+  } else { var mod; }
+})(this, function (exports) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _extends = Object.assign || function (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+
+    return target;
+  };
+
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+  };
+
+  var isDate = exports.isDate = function isDate(d) {
+    return d instanceof Date;
+  };
+  var isEmpty = exports.isEmpty = function isEmpty(o) {
+    return Object.keys(o).length === 0;
+  };
+  var isObject = exports.isObject = function isObject(o) {
+    return o != null && (typeof o === 'undefined' ? 'undefined' : _typeof(o)) === 'object';
+  };
+  var properObject = exports.properObject = function properObject(o) {
+    return isObject(o) && !o.hasOwnProperty ? _extends({}, o) : o;
+  };
+});
+
+/***/ }),
+
 /***/ 1133:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -13299,6 +13739,7 @@ const core = __nccwpck_require__(2186);
 const fs = __nccwpck_require__(5747);
 const isEqual = __nccwpck_require__(52);
 const artifact = __nccwpck_require__(2605);
+const { diff } = __nccwpck_require__(4933);
 const artifactClient = artifact.create();
 const {
   getAllTransformations,
@@ -13311,6 +13752,7 @@ const {
   publish
 } = __nccwpck_require__(9620);
 
+const testOutputDir = "./test-outputs";
 const uploadTestArtifact = core.getInput("uploadTestArtifact") || false;
 const metaFilePath = core.getInput("metaPath");
 
@@ -13430,17 +13872,6 @@ async function testAndPublish() {
     );
     core.info(`Test api output: ${JSON.stringify(res.data)}`);
 
-    // upload artifact
-    if (uploadTestArtifact) {
-      core.info("Uploading test api output...");
-      fs.writeFileSync("test-results.json", JSON.stringify(res.data));
-      await artifactClient.uploadArtifact(
-        "transformer-test-results",
-        ["test-results.json"],
-        "."
-      );
-    }
-
     core.info("Comparing api output with expected output...");
     if (res.data.result.failedTestResults.length > 0) {
       throw new Error(
@@ -13450,6 +13881,11 @@ async function testAndPublish() {
 
     let successResults = res.data.result.successTestResults;
 
+    let errorResults = [];
+    let testOutputFiles = [];
+    if (!fs.existsSync(testOutputDir)) {
+      fs.mkdirSync(testOutputDir);
+    }
     for (let i = 0; i < successResults.length; i++) {
       let expectedOutputfile =
         transformationDict[successResults[i].transformerVersionID][
@@ -13458,17 +13894,50 @@ async function testAndPublish() {
       let expectedOutput = expectedOutputfile
         ? JSON.parse(fs.readFileSync(expectedOutputfile))
         : "";
+
+      let apiOutput = successResults[i].result.output;
+
+      let transformationName =
+        transformationDict[successResults[i].transformerVersionID].name;
+
+      fs.writeFileSync(
+        `${testOutputDir}/${transformationName}-output.json`,
+        JSON.stringify(apiOutput)
+      );
+      testOutputFiles.push(`${transformationName}-output.json`);
+
       if (expectedOutput == "") {
         continue;
       }
-      let apiOutput = successResults[i].result.output;
+
       if (!isEqual(expectedOutput, apiOutput)) {
-        throw new Error(
+        errorResults.push(
           `Transformer name: ${
             transformationDict[successResults[i].transformerVersionID].name
           } test outputs don't match`
         );
+
+        fs.writeFileSync(
+          `${testOutputDir}/${transformationName}-diff.json`,
+          diff(expectedOutput, apiOutput)
+        );
+
+        testOutputFiles.push(`${transformationName}-diff.json`);
       }
+    }
+
+    // upload artifact
+    if (uploadTestArtifact) {
+      core.info("Uploading test api output...");
+      await artifactClient.uploadArtifact(
+        "transformer-test-results",
+        testOutputFiles,
+        testOutputDir
+      );
+    }
+
+    if (errorResults.length > 0) {
+      throw new Error(errorResults.join(", "));
     }
 
     // test passed
