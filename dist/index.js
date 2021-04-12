@@ -13901,10 +13901,12 @@ async function testAndPublish() {
         transformationDict[successResults[i].transformerVersionID].name;
 
       fs.writeFileSync(
-        `${testOutputDir}/${transformationName}-output.json`,
+        `${testOutputDir}/${transformationName}_output.json`,
         JSON.stringify(apiOutput)
       );
-      testOutputFiles.push(`${transformationName}-output.json`);
+      testOutputFiles.push(
+        `${testOutputDir}/${transformationName}_output.json`
+      );
 
       if (expectedOutput == "") {
         continue;
@@ -13918,11 +13920,13 @@ async function testAndPublish() {
         );
 
         fs.writeFileSync(
-          `${testOutputDir}/${transformationName}-diff.json`,
+          `${testOutputDir}/${transformationName}_diff.json`,
           diff(expectedOutput, apiOutput)
         );
 
-        testOutputFiles.push(`${transformationName}-diff.json`);
+        testOutputFiles.push(
+          `${testOutputDir}/${transformationName}_diff.json`
+        );
       }
     }
 
@@ -13932,7 +13936,7 @@ async function testAndPublish() {
       await artifactClient.uploadArtifact(
         "transformer-test-results",
         testOutputFiles,
-        testOutputDir
+        "."
       );
     }
 
