@@ -3,6 +3,7 @@ const fs = require("fs");
 const isEqual = require("lodash/isEqual");
 const artifact = require("@actions/artifact");
 const { detailedDiff } = require("deep-object-diff");
+var jsonDiff = require("json-diff");
 const artifactClient = artifact.create();
 const {
   getAllTransformations,
@@ -185,9 +186,14 @@ async function testAndPublish() {
           } test outputs don't match`
         );
 
+        // fs.writeFileSync(
+        //   `${testOutputDir}/${transformationName}_diff.json`,
+        //   JSON.stringify(detailedDiff(expectedOutput, apiOutput))
+        // );
+
         fs.writeFileSync(
           `${testOutputDir}/${transformationName}_diff.json`,
-          JSON.stringify(detailedDiff(expectedOutput, apiOutput))
+          jsonDiff.diffString(expectedOutput, apiOutput, { color: true })
         );
 
         testOutputFiles.push(

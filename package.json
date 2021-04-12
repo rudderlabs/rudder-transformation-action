@@ -16,6 +16,7 @@
     "deep-object-diff": "^1.1.0",
     "fs": "0.0.1-security",
     "i": "^0.3.6",
+    "json-diff": "^0.5.4",
     "lodash": "^4.17.21",
     "npm": "^7.9.0"
   },
