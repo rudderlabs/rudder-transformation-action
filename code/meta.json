@@ -7,6 +7,14 @@
       "type": "transformation",
       "test-input-file": "./code/events.json",
       "expected-output": "./code/expected.json"
+    },
+    {
+      "file": "./code/code-2.js",
+      "name": "action-T13_2",
+      "description": "action-T13_2",
+      "type": "transformation",
+      "test-input-file": "./code/events.json",
+      "expected-output": "./code/expected-incorrect.json"
     }
   ],
   "libraries": [
