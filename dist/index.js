@@ -16461,15 +16461,10 @@ async function testAndPublish() {
           } test outputs don't match`
         );
 
-        // fs.writeFileSync(
-        //   `${testOutputDir}/${transformationName}_diff.json`,
-        //   JSON.stringify(detailedDiff(expectedOutput, apiOutput))
-        // );
-
         fs.writeFileSync(
           `${testOutputDir}/${transformationName}_diff.json`,
           JSON.stringify(
-            jsonDiff.diff(expectedOutput, apiOutput, { color: true })
+            jsonDiff.diff(expectedOutput, apiOutput)
           )
         );
 

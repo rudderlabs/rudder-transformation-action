@@ -1,10 +1,18 @@
 [
   {
-    "revenue": 0,
-    "price": 0,
-    "profit": 0,
+    "revenue": 30,
+    "price": 20,
+    "profit": 10,
     "city": "kolkata",
-    "country": ["no data found"],
-    "street": "no data found"
+    "country": "India",
+    "street": "B6"
+  },
+  {
+    "revenue": 30,
+    "price": 20,
+    "profit": 10,
+    "city": "kolkata",
+    "country": "India",
+    "street": "B6"
   }
 ]
