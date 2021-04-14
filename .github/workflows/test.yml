@@ -12,7 +12,7 @@ jobs:
       - name: Test transformers and libraries
         uses: ./
         with:
-          metaPath: './code/demo-meta_2.json'
+          metaPath: './code/demo-meta.json'
           email: 'sayan+10@rudderlabs.com'
           accessKey: ${{ secrets.ACCESS_KEY }}
           serverEndpoint: 'https://bf3c29c39f5f.ngrok.io'
