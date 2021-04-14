@@ -4,7 +4,8 @@
       "file": "./code/demo-code.js",
       "name": "action-demo-2",
       "description": "action-demo-2",
-      "type": "transformation"
+      "type": "transformation",
+      "test-input-file": "./code/events.json"
     }
   ],
   "libraries": []
