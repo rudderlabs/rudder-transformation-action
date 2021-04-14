@@ -12,8 +12,8 @@ jobs:
       - name: Test transformers and libraries
         uses: ./
         with:
-          metaPath: './code/meta.json'
+          metaPath: './code/demo-meta.json'
           email: 'sayan+10@rudderlabs.com'
           accessKey: ${{ secrets.ACCESS_KEY }}
-          serverEndpoint: ' https://5419939c099f.ngrok.io'
+          serverEndpoint: 'https://bf3c29c39f5f.ngrok.io'
           uploadTestArtifact: true
