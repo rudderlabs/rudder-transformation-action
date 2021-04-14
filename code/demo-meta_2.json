@@ -1,7 +1,7 @@
 {
   "transformations": [
     {
-      "file": "./code/demo-code.js",
+      "file": "./code/demo-code_2.js",
       "name": "action-demo-2",
       "description": "action-demo-2",
       "type": "transformation",
