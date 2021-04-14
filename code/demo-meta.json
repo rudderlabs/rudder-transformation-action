@@ -1,9 +1,9 @@
 {
   "transformations": [
     {
-      "file": "./code/demo-code.js",
-      "name": "action-demo-2",
-      "description": "action-demo-2",
+      "file": "./code/demo-code_3.js",
+      "name": "action-demo-3",
+      "description": "action-demo-3",
       "type": "transformation",
       "test-input-file": "./code/events.json"
     }
