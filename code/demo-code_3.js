@@ -1,3 +1,4 @@
 export function transformEvent(events) {
-    return events;
-  }
+  if (events.context.address) events.context.address.street = "B1/6";
+  return events;
+}
