@@ -7,5 +7,6 @@
       "type": "transformation",
       "test-input-file": "./code/events.json"
     }
-  ]
+  ],
+  "libraries": []
 }
