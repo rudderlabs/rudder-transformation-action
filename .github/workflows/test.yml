@@ -14,6 +14,6 @@ jobs:
         with:
           metaPath: './code/meta.json'
           email: 'sayan+10@rudderlabs.com'
-          accessKey: '1q6uMVEyyRHTPXvk7VIcT0NoISU'
+          accessKey: ${{ secrets.ACCESS_KEY }}
           serverEndpoint: ' https://5419939c099f.ngrok.io'
           uploadTestArtifact: true
