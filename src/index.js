@@ -23,6 +23,8 @@ const metaFilePath = core.getInput("metaPath");
 const { transformations, libraries } = JSON.parse(
   fs.readFileSync(metaFilePath, "utf-8")
 );
+transformations = transformations || [];
+libraries = libraries || [];
 core.info(`transformations from meta:  ${JSON.stringify(transformations)}`);
 core.info(`libraries from meta: ${JSON.stringify(libraries)}`);
 
@@ -113,9 +115,16 @@ async function testAndPublish() {
 
     for (let i = 0; i < Object.keys(transformationDict).length; i++) {
       let trVersionId = Object.keys(transformationDict)[i];
-      let testInputPath = transformationDict[trVersionId]["test-input-file"];
-      let testInput = JSON.parse(fs.readFileSync(testInputPath));
-      transformationTest.push({ versionId: trVersionId, testInput });
+      let testInputPath =
+        transformationDict[trVersionId]["test-input-file"] || "";
+      let testInput = testInputPath
+        ? JSON.parse(fs.readFileSync(testInputPath))
+        : "";
+      if (testInput) {
+        transformationTest.push({ versionId: trVersionId, testInput });
+      } else {
+        transformationTest.push({ versionId: trVersionId });
+      }
     }
 
     for (let i = 0; i < Object.keys(libraryDict).length; i++) {

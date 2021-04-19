@@ -16,19 +16,5 @@
       "test-input-file": "./code/events.json",
       "expected-output": "./code/expected-incorrect.json"
     }
-  ],
-  "libraries": [
-    {
-      "file": "./code/lib1.js",
-      "name": "getFinanceData13",
-      "description": "action-lib",
-      "type": "library"
-    },
-    {
-      "file": "./code/lib2.js",
-      "name": "getUserAddress13",
-      "description": "action-lib",
-      "type": "library"
-    }
   ]
 }
