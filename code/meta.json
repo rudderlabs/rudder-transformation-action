@@ -12,9 +12,7 @@
       "file": "./code/code_2.js",
       "name": "action-T13_2",
       "description": "action-T13_2",
-      "type": "transformation",
-      "test-input-file": "./code/events.json",
-      "expected-output": "./code/expected-incorrect.json"
+      "type": "transformation"
     }
   ]
 }
