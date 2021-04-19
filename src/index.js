@@ -20,7 +20,7 @@ const testOutputDir = "./test-outputs";
 const uploadTestArtifact = core.getInput("uploadTestArtifact") || false;
 const metaFilePath = core.getInput("metaPath");
 
-const { transformations, libraries } = JSON.parse(
+let { transformations, libraries } = JSON.parse(
   fs.readFileSync(metaFilePath, "utf-8")
 );
 transformations = transformations || [];
