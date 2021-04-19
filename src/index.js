@@ -30,8 +30,12 @@ const libraryNameToId = {};
 
 function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
   let meta = JSON.parse(fs.readFileSync(metaFilePath, "utf-8"));
-  transformations = meta.transformations || [];
-  libraries = meta.libraries || [];
+  if (meta.transformations) {
+    transformations.push(...meta.transformations);
+  }
+  if (meta.libraries) {
+    libraries.push(...meta.libraries);
+  }
   core.info(`transformations from meta:  ${JSON.stringify(transformations)}`);
   core.info(`libraries from meta: ${JSON.stringify(libraries)}`);
 }
@@ -68,8 +72,8 @@ async function testAndPublish() {
 
   try {
     core.info("Initilaizing...");
-    let transformations;
-    let libraries;
+    let transformations = [];
+    let libraries = [];
     getTransformationsAndLibrariesFromLocal(transformations, libraries);
     await init();
 
