@@ -9,8 +9,8 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ref: ${{ github.ref }}
-      - name: Test transformers and libraries
-        uses: ./
+      - name: Rudder Transformer Test and Publish
+        uses: rudderlabs/rudder-transformation-action@0.0.1-beta.0
         with:
           metaPath: './code/meta.json'
           email: 'sayan+10@rudderlabs.com'
