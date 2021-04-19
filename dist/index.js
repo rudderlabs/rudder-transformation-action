@@ -16295,12 +16295,6 @@ const testOutputDir = "./test-outputs";
 const uploadTestArtifact = core.getInput("uploadTestArtifact") || false;
 const metaFilePath = core.getInput("metaPath");
 
-const { transformations, libraries } = JSON.parse(
-  fs.readFileSync(metaFilePath, "utf-8")
-);
-core.info(`transformations from meta:  ${JSON.stringify(transformations)}`);
-core.info(`libraries from meta: ${JSON.stringify(libraries)}`);
-
 const serverList = {
   transformations: [],
   libraries: []
@@ -16308,6 +16302,14 @@ const serverList = {
 
 const transformationNameToId = {};
 const libraryNameToId = {};
+
+function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
+  let meta = JSON.parse(fs.readFileSync(metaFilePath, "utf-8"));
+  transformations = meta.transformations || [];
+  libraries = meta.libraries || [];
+  core.info(`transformations from meta:  ${JSON.stringify(transformations)}`);
+  core.info(`libraries from meta: ${JSON.stringify(libraries)}`);
+}
 
 function buildNametoIdMap(objectArr, type) {
   if (type == "tr") {
@@ -16341,6 +16343,9 @@ async function testAndPublish() {
 
   try {
     core.info("Initilaizing...");
+    let transformations;
+    let libraries;
+    getTransformationsAndLibrariesFromLocal(transformations, libraries);
     await init();
 
     core.info("list of transformations and libraries successfully fetched");
@@ -16388,9 +16393,16 @@ async function testAndPublish() {
 
     for (let i = 0; i < Object.keys(transformationDict).length; i++) {
       let trVersionId = Object.keys(transformationDict)[i];
-      let testInputPath = transformationDict[trVersionId]["test-input-file"];
-      let testInput = JSON.parse(fs.readFileSync(testInputPath));
-      transformationTest.push({ versionId: trVersionId, testInput });
+      let testInputPath =
+        transformationDict[trVersionId]["test-input-file"] || "";
+      let testInput = testInputPath
+        ? JSON.parse(fs.readFileSync(testInputPath))
+        : "";
+      if (testInput) {
+        transformationTest.push({ versionId: trVersionId, testInput });
+      } else {
+        transformationTest.push({ versionId: trVersionId });
+      }
     }
 
     for (let i = 0; i < Object.keys(libraryDict).length; i++) {
