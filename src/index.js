@@ -215,7 +215,7 @@ async function testAndPublish() {
     }
 
     // upload artifact
-    if (uploadTestArtifact === true) {
+    if (uploadTestArtifact === "true") {
       core.info("Uploading test api output...");
       await artifactClient.uploadArtifact(
         "transformer-test-results",
