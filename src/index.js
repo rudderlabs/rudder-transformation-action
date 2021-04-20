@@ -29,6 +29,7 @@ const transformationNameToId = {};
 const libraryNameToId = {};
 
 function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
+  core.info("metaFilePath: " + metaFilePath);
   let meta = JSON.parse(fs.readFileSync(metaFilePath, "utf-8"));
   if (meta.transformations) {
     transformations.push(...meta.transformations);
@@ -214,7 +215,7 @@ async function testAndPublish() {
     }
 
     // upload artifact
-    if (uploadTestArtifact) {
+    if (uploadTestArtifact === true) {
       core.info("Uploading test api output...");
       await artifactClient.uploadArtifact(
         "transformer-test-results",
