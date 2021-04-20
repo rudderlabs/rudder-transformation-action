@@ -16304,7 +16304,7 @@ const transformationNameToId = {};
 const libraryNameToId = {};
 
 function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
-  core.info("metaFilePath: " + metaFilePath);
+  core.info("metaFilePath test: " + metaFilePath);
   let meta = JSON.parse(fs.readFileSync(metaFilePath, "utf-8"));
   if (meta.transformations) {
     transformations.push(...meta.transformations);
