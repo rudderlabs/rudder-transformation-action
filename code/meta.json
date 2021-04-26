@@ -20,5 +20,17 @@
       "description": "action-T13_3",
       "type": "transformation"
     }
+  ],
+  "libraries": [
+    {
+      "file": "./code/lib1.js",
+      "name": "getFinanceData13",
+      "description": "action-T13"
+    },
+    {
+      "file": "./code/lib2.js",
+      "name": "getUserAddress13",
+      "description": "action-T13_2"
+    }
   ]
 }
