@@ -2,7 +2,7 @@
   "transformations": [
     {
       "file": "./code/code.js",
-      "name": "action-T13",
+      "name": "action-T13-t",
       "description": "action-T13",
       "type": "transformation",
       "test-input-file": "./code/events.json",
@@ -10,13 +10,13 @@
     },
     {
       "file": "./code/code_2.js",
-      "name": "action-T13_2",
+      "name": "action-T13_2-t",
       "description": "action-T13_2",
       "type": "transformation"
     },
     {
       "file": "./code/code_3.js",
-      "name": "action-T13_3",
+      "name": "action-T13_3-t",
       "description": "action-T13_3",
       "type": "transformation"
     }
@@ -25,12 +25,12 @@
     {
       "file": "./code/lib1.js",
       "name": "getFinanceData13",
-      "description": "action-T13"
+      "description": "action-T13-lib"
     },
     {
       "file": "./code/lib2.js",
       "name": "getUserAddress13",
-      "description": "action-T13_2"
+      "description": "action-T13_2-lib"
     }
   ]
 }
