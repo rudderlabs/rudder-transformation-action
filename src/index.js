@@ -65,6 +65,8 @@ async function init() {
 
   buildNametoIdMap(serverList.transformations, "tr");
   buildNametoIdMap(serverList.libraries, "lib");
+  core.info(`fetched transform::: ${transformationNameToId}`)
+  core.info(`fetched library::: ${libraryNameToId}`)
 }
 
 async function testAndPublish() {
@@ -96,7 +98,7 @@ async function testAndPublish() {
       }
       transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
     }
-
+    core.info(`transorm dict ::: ${JSON.stringify(transformationDict)}`)
     core.info("transformations create/update done!");
 
     for (let i = 0; i < libraries.length; i++) {
@@ -115,7 +117,7 @@ async function testAndPublish() {
       }
       libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
     }
-
+    core.info(`library dict ::: ${JSON.stringify(libraryDict)}`)
     core.info("libraries create/update done!");
 
     let transformationTest = [];
@@ -171,6 +173,10 @@ async function testAndPublish() {
       fs.mkdirSync(testOutputDir);
     }
     for (let i = 0; i < successResults.length; i++) {
+      if (!transformationDict.hasOwnProperty(successResults[i].transformerVersionID) || !transformationDict[successResults[i].transformerVersionID].hasOwnProperty("expected-output")) {
+        continue;
+      }
+
       let expectedOutputfile =
         transformationDict[successResults[i].transformerVersionID][
           "expected-output"
@@ -205,7 +211,7 @@ async function testAndPublish() {
 
         fs.writeFileSync(
           `${testOutputDir}/${transformationName}_diff.json`,
-          JSON.stringify(detailedDiff(expectedOutput, apiOutput))
+          JSON.stringify(detailedDiff(expectedOutput, apiOutput), null, 2)
         );
 
         testOutputFiles.push(
