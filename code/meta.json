@@ -2,7 +2,7 @@
   "transformations": [
     {
       "file": "./code/code.js",
-      "name": "action-T13-t",
+      "name": "action-T13",
       "description": "action-T13",
       "type": "transformation",
       "test-input-file": "./code/events.json",
@@ -10,13 +10,13 @@
     },
     {
       "file": "./code/code_2.js",
-      "name": "action-T13_2-t",
+      "name": "action-T13_2",
       "description": "action-T13_2",
       "type": "transformation"
     },
     {
       "file": "./code/code_3.js",
-      "name": "action-T13_3-t",
+      "name": "action-T13_3",
       "description": "action-T13_3",
       "type": "transformation"
     }
