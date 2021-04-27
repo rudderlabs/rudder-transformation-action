@@ -211,7 +211,7 @@ async function testAndPublish() {
 
         fs.writeFileSync(
           `${testOutputDir}/${transformationName}_diff.json`,
-          JSON.stringify(detailedDiff(expectedOutput, apiOutput), null, 2)
+          JSON.stringify(detailedDiff(expectedOutput, apiOutput))
         );
 
         testOutputFiles.push(
