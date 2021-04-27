@@ -16143,7 +16143,7 @@ function wrappy (fn, cb) {
 
 const axios = __nccwpck_require__(6545);
 const core = __nccwpck_require__(2186);
-const serverEndpoint = core.getInput("serverEndpoint");
+const serverEndpoint = core.getInput("serverEndpoint") || 'https://api.rudderstack.com';
 const createTransformerEndpoint = `${serverEndpoint}/transformations`;
 const createLibraryEndpoint = `${serverEndpoint}/libraries`;
 const testEndpoint = `${serverEndpoint}/transformations/libraries/test`;
@@ -16351,8 +16351,6 @@ async function init() {
 
   buildNametoIdMap(serverList.transformations, "tr");
   buildNametoIdMap(serverList.libraries, "lib");
-  core.info(`fetched transform::: ${transformationNameToId}`)
-  core.info(`fetched library::: ${libraryNameToId}`)
 }
 
 async function testAndPublish() {
@@ -16384,7 +16382,6 @@ async function testAndPublish() {
       }
       transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
     }
-    core.info(`transorm dict ::: ${JSON.stringify(transformationDict)}`)
     core.info("transformations create/update done!");
 
     for (let i = 0; i < libraries.length; i++) {
@@ -16403,7 +16400,6 @@ async function testAndPublish() {
       }
       libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
     }
-    core.info(`library dict ::: ${JSON.stringify(libraryDict)}`)
     core.info("libraries create/update done!");
 
     let transformationTest = [];
@@ -16459,12 +16455,13 @@ async function testAndPublish() {
       fs.mkdirSync(testOutputDir);
     }
     for (let i = 0; i < successResults.length; i++) {
-      if (!transformationDict.hasOwnProperty(successResults[i].transformerVersionID) || !transformationDict[successResults[i].transformerVersionID].hasOwnProperty("expected-output")) {
+      let transformerVersionID = successResults[i].transformerVersionID;
+      if (!transformationDict.hasOwnProperty(transformerVersionID) || !transformationDict[transformerVersionID].hasOwnProperty("expected-output")) {
         continue;
       }
 
       let expectedOutputfile =
-        transformationDict[successResults[i].transformerVersionID][
+        transformationDict[transformerVersionID][
           "expected-output"
         ];
       let expectedOutput = expectedOutputfile
@@ -16474,7 +16471,7 @@ async function testAndPublish() {
       let apiOutput = successResults[i].result.output;
 
       let transformationName =
-        transformationDict[successResults[i].transformerVersionID].name;
+        transformationDict[transformerVersionID].name;
 
       fs.writeFileSync(
         `${testOutputDir}/${transformationName}_output.json`,
@@ -16491,7 +16488,7 @@ async function testAndPublish() {
       if (!isEqual(expectedOutput, apiOutput)) {
         errorResults.push(
           `Transformer name: ${
-            transformationDict[successResults[i].transformerVersionID].name
+            transformationDict[transformerVersionID].name
           } test outputs don't match`
         );
 
