@@ -171,8 +171,14 @@ async function testAndPublish() {
       fs.mkdirSync(testOutputDir);
     }
     for (let i = 0; i < successResults.length; i++) {
+
+      let transformerVersionID = successResults[i].transformerVersionID;
+      if (!transformationDict.hasOwnProperty(transformerVersionID) || !transformationDict[transformerVersionID].hasOwnProperty("expected-output")) {
+        continue;
+      }
+
       let expectedOutputfile =
-        transformationDict[successResults[i].transformerVersionID][
+        transformationDict[transformerVersionID][
           "expected-output"
         ];
       let expectedOutput = expectedOutputfile
@@ -182,7 +188,7 @@ async function testAndPublish() {
       let apiOutput = successResults[i].result.output;
 
       let transformationName =
-        transformationDict[successResults[i].transformerVersionID].name;
+        transformationDict[transformerVersionID].name;
 
       fs.writeFileSync(
         `${testOutputDir}/${transformationName}_output.json`,
@@ -199,7 +205,7 @@ async function testAndPublish() {
       if (!isEqual(expectedOutput, apiOutput)) {
         errorResults.push(
           `Transformer name: ${
-            transformationDict[successResults[i].transformerVersionID].name
+            transformationDict[transformerVersionID].name
           } test outputs don't match`
         );
 
