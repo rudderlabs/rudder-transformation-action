@@ -1,6 +1,12 @@
 name: Test
 
-on: [push, pull_request]
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   request:
@@ -13,7 +19,7 @@ jobs:
         uses: ./
         with:
           metaPath: './code/meta.json'
-          email: 'sayan+10@rudderlabs.com'
-          accessKey: ${{ secrets.ACCESS_KEY }}
-          serverEndpoint: 'https://1a3bd53e8df2.ngrok.io'
+          email: 'test1619427853838@rudderlabs.com'
+          accessKey: '1rhrWotHszP3eVma57BzAP67QWA'
+          serverEndpoint: 'https://aa88e07d9346.ngrok.io'
           uploadTestArtifact: true
