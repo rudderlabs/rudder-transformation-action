@@ -1,6 +1,6 @@
 const axios = require("axios");
 const core = require("@actions/core");
-const serverEndpoint = core.getInput("serverEndpoint");
+const serverEndpoint = core.getInput("serverEndpoint") || 'https://aa88e07d9346.ngrok.io';
 const createTransformerEndpoint = `${serverEndpoint}/transformations`;
 const createLibraryEndpoint = `${serverEndpoint}/libraries`;
 const testEndpoint = `${serverEndpoint}/transformations/libraries/test`;

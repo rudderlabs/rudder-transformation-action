@@ -21,5 +21,4 @@ jobs:
           metaPath: './code/meta.json'
           email: 'test1619427853838@rudderlabs.com'
           accessKey: '1rhrWotHszP3eVma57BzAP67QWA'
-          serverEndpoint: 'https://aa88e07d9346.ngrok.io'
           uploadTestArtifact: true
