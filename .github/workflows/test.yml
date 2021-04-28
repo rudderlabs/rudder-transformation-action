@@ -12,8 +12,7 @@ jobs:
   request:
     runs-on: ubuntu-latest
     env:
-      if: ${{ github.event_name == 'pull_request' }}
-      TEST_ONLY: false
+      TEST_ONLY: ${{ github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v2
         with:

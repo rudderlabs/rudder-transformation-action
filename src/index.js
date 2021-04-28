@@ -28,8 +28,8 @@ const serverList = {
 const transformationNameToId = {};
 const libraryNameToId = {};
 
-const testOnly = core.getInput("TEST_ONLY");
-core.info(`env var ::: ${testOnly} ::: ${process.env}`);
+const testOnly = (process.env.TEST_ONLY == 'true');
+core.info(`env var ::: ${testOnly} ::: ${process.env.TEST_ONLY}`);
 
 function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
   core.info("metaFilePath test: " + metaFilePath);
@@ -239,8 +239,11 @@ async function testAndPublish() {
     core.info("Test Passed!!!");
 
     // publish
-    res = await publish(transformationTest, librariesTest);
-    core.info(`Publish result: ${JSON.stringify(res.data)}`);
+    if (!testOnly) {
+      res = await publish(transformationTest, librariesTest);
+      core.info(`Publish result: ${JSON.stringify(res.data)}`);
+    }
+    
   } catch (err) {
     if (err.response) {
       core.error(err.response.data);
