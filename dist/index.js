@@ -16150,6 +16150,7 @@ const testEndpoint = `${serverEndpoint}/transformations/libraries/test`;
 const publishEndpoint = `${serverEndpoint}/transformations/libraries/publish`;
 const listTransformationsEndpoint = `${serverEndpoint}/transformations`;
 const listLibrariesEndpoint = `${serverEndpoint}/libraries`;
+ 
 
 async function getAllTransformations() {
   return axios.default.get(listTransformationsEndpoint, {
@@ -16314,6 +16315,9 @@ const serverList = {
 const transformationNameToId = {};
 const libraryNameToId = {};
 
+const testOnly = core.getInput("TEST_ONLY");
+core.info(`env var ::: ${testOnly} ::: ${process.env}`);
+
 function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
   core.info("metaFilePath test: " + metaFilePath);
   let meta = JSON.parse(fs.readFileSync(metaFilePath, "utf-8"));
@@ -16323,6 +16327,7 @@ function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
   if (meta.libraries) {
     libraries.push(...meta.libraries);
   }
+  core.info(`env var ::: ${testOnly} ::: ${JSON.stringify(process.env)}`);
   core.info(`transformations from meta:  ${JSON.stringify(transformations)}`);
   core.info(`libraries from meta: ${JSON.stringify(libraries)}`);
 }
