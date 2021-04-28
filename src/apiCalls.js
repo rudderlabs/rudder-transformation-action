@@ -8,6 +8,9 @@ const publishEndpoint = `${serverEndpoint}/transformations/libraries/publish`;
 const listTransformationsEndpoint = `${serverEndpoint}/transformations`;
 const listLibrariesEndpoint = `${serverEndpoint}/libraries`;
 
+const testOnly = core.getInput("TEST_ONLY");
+core.info(`env var ::: ${testOnly} ::: ${process.env}`); 
+
 async function getAllTransformations() {
   return axios.default.get(listTransformationsEndpoint, {
     auth: {

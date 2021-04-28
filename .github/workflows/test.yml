@@ -11,6 +11,8 @@ on:
 jobs:
   request:
     runs-on: ubuntu-latest
+    env:
+      TEST_ONLY: true
     steps:
       - uses: actions/checkout@v2
         with:
