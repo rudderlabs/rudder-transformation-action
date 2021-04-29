@@ -29,7 +29,6 @@ const transformationNameToId = {};
 const libraryNameToId = {};
 
 const testOnly = (process.env.TEST_ONLY == 'true');
-core.info(`env var ::: ${testOnly} ::: ${process.env.TEST_ONLY}`);
 
 function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
   core.info("metaFilePath test: " + metaFilePath);
@@ -40,9 +39,6 @@ function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
   if (meta.libraries) {
     libraries.push(...meta.libraries);
   }
-  core.info(`env var ::: ${testOnly} ::: ${JSON.stringify(process.env)}`);
-  core.info(`transformations from meta:  ${JSON.stringify(transformations)}`);
-  core.info(`libraries from meta: ${JSON.stringify(libraries)}`);
 }
 
 function buildNametoIdMap(objectArr, type) {
