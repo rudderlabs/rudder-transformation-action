@@ -16314,6 +16314,8 @@ const serverList = {
 const transformationNameToId = {};
 const libraryNameToId = {};
 
+const testOnly = (process.env.TEST_ONLY == 'true');
+
 function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
   core.info("metaFilePath test: " + metaFilePath);
   let meta = JSON.parse(fs.readFileSync(metaFilePath, "utf-8"));
@@ -16323,8 +16325,6 @@ function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
   if (meta.libraries) {
     libraries.push(...meta.libraries);
   }
-  core.info(`transformations from meta:  ${JSON.stringify(transformations)}`);
-  core.info(`libraries from meta: ${JSON.stringify(libraries)}`);
 }
 
 function buildNametoIdMap(objectArr, type) {
@@ -16521,8 +16521,11 @@ async function testAndPublish() {
     core.info("Test Passed!!!");
 
     // publish
-    res = await publish(transformationTest, librariesTest);
-    core.info(`Publish result: ${JSON.stringify(res.data)}`);
+    if (!testOnly) {
+      res = await publish(transformationTest, librariesTest);
+      core.info(`Publish result: ${JSON.stringify(res.data)}`);
+    }
+    
   } catch (err) {
     if (err.response) {
       core.error(err.response.data);
