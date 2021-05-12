@@ -16468,7 +16468,7 @@ async function testAndPublish() {
         ? JSON.parse(fs.readFileSync(expectedOutputfile))
         : "";
 
-      let apiOutput = successResults[i].result.output;
+      let apiOutput = successResults[i].result.output.transformedEvents;
 
       let transformationName =
         transformationDict[transformerVersionID].name;
