@@ -16315,7 +16315,6 @@ const transformationNameToId = {};
 const libraryNameToId = {};
 
 const testOnly = (process.env.TEST_ONLY == 'true');
-const commit_id = process.env.GITHUB_SHA || '';
 
 function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
   core.info("metaFilePath test: " + metaFilePath);
@@ -16360,7 +16359,6 @@ async function testAndPublish() {
 
   try {
     core.info("Initilaizing...");
-    core.info(commit_id);
     let transformations = [];
     let libraries = [];
     getTransformationsAndLibrariesFromLocal(transformations, libraries);
