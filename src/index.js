@@ -29,6 +29,7 @@ const transformationNameToId = {};
 const libraryNameToId = {};
 
 const testOnly = (process.env.TEST_ONLY == 'true');
+const commitId = process.env.GITHUB_SHA || '';
 
 function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
   core.info("metaFilePath test: " + metaFilePath);
@@ -236,7 +237,7 @@ async function testAndPublish() {
 
     // publish
     if (!testOnly) {
-      res = await publish(transformationTest, librariesTest);
+      res = await publish(transformationTest, librariesTest, commitId);
       core.info(`Publish result: ${JSON.stringify(res.data)}`);
     }
     
