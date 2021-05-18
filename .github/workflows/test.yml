@@ -12,7 +12,7 @@ jobs:
   request:
     runs-on: ubuntu-latest
     env:
-      TEST_ONLY: ${{ github.event_name == 'push' }}
+      TEST_ONLY: ${{ github.event_name != 'push' }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -21,7 +21,7 @@ jobs:
         uses: ./
         with:
           metaPath: './code/meta.json'
-          email: 'jayachand+88@rudderstack.com'
-          accessKey: '1segPLUELpRwFmioa1h8OraXhVO'
+          email: 'test1619427853838@rudderlabs.com'
+          accessKey: '1rhrWotHszP3eVma57BzAP67QWA'
           serverEndpoint: 'https://aa88e07d9346.ngrok.io'
           uploadTestArtifact: true

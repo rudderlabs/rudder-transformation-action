@@ -3,20 +3,20 @@
     {
       "file": "./code/code.js",
       "name": "action-T14",
-      "description": "action-T17",
+      "description": "action-T14",
       "type": "transformation",
       "test-input-file": "./code/events.json",
       "expected-output": "./code/expected.json"
     },
     {
       "file": "./code/code_2.js",
-      "name": "action-T17_2",
+      "name": "action-T14_2",
       "description": "action-T13_2",
       "type": "transformation"
     },
     {
       "file": "./code/code_3.js",
-      "name": "action-T17_3",
+      "name": "action-T14_3",
       "description": "action-T13_3",
       "type": "transformation"
     }
