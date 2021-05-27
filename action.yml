@@ -1,7 +1,7 @@
 name: 'Rudder Transformation Action'
 description: 'Tests transformations and libraries from your repo and publishes them to your Rudderstack workspace'
-icon: 'activity'
-color: 'purple'
+icon: activity
+color: purple
 inputs:
     metaPath:
         description: 'File containing metadata about transformation and libraries'
