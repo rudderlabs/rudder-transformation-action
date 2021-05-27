@@ -1,21 +1,21 @@
-name: 'Rudder Transformer Test and Publish'
-description: 'Test user transformations'
+name: 'Rudder Transformation Action'
+description: 'Tests transformations and libraries from your repo and publishes them to your Rudderstack workspace'
 inputs:
     metaPath:
-        description: 'File containing transformation and libraries meta'
+        description: 'File containing metadata about transformation and libraries'
         required: true
     email:
-        description: 'email'
+        description: 'Owner email of the workspace'
         required: true
     accessToken:
-        description: 'token'
+        description: 'accessToken generated for a workspace'
         required: true
     serverEndpoint:
         description: 'backend url'
-        required: true
-        default: 'https://api.rudderlabs.com'
+        required: false
+        default: 'https://api.rudderstack.com'
     uploadTestArtifact:
-        description: 'upload test results'
+        description: 'Toggle for enabling artifacts'
         required: false
 runs:
     using: 'node12'
