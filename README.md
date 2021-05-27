@@ -8,16 +8,16 @@ This Github Action allows developers to test and publish user transformations an
 name: Rudder Transformer Test and Publish
 uses: rudderlabs/rudder-transformation-action@<version>
 with:
-	metaPath: './code/meta.json'
-	email: 'test@rudderlabs.com'
-	accessKey: ${{ secrets.ACCESS_KEY }}
-	serverEndpoint: 'https://api.rudderlabs.com'
-	uploadTestArtifact: true
+    metaPath: './code/meta.json'
+    email: 'test@rudderlabs.com'
+    accessToken: ${{ secrets.ACCESS_KEY }}
+    serverEndpoint: 'https://api.rudderlabs.com'
+    uploadTestArtifact: true
 ```
 
-> Note: The action does the work of testing a transformation for a given set of events, it's creation and updation along with any custom libraries using the transformation API. To read more about check [here](https://rudderstack.com/blog/rudderstacks-transformations-api). For the action to work, one would need the workspace email and accessKey.
+> Note: The action does the work of testing a transformation for a given set of events, it's creation and updation along with any custom libraries using the transformation API. To read more about check [here](https://rudderstack.com/blog/rudderstacks-transformations-api). For the action to work, one would need the workspace email and accessToken. Learn how to generate accessToken [here](https://docs.rudderstack.com/adding-a-new-user-transformation-in-rudderstack/rudderstack-transformation-api/api-access-token)
 
-For examples of using the action, checkout the [rudder-transformation-action](https://github.com/rudderlabs/rudder-transformation-action/tree/main/.github/workflows) repository
+For examples of using the action, checkout this [sample repository](https://github.com/rudderlabs/rudder-transformation-action-code/tree/main/.github/workflows)
 
 ## Action Spec
 
@@ -30,32 +30,29 @@ For examples of using the action, checkout the [rudder-transformation-action](ht
 ```jsx
 // Meta file schema
 {
-	"transformations" : <array of transformation meta information>,
-	"libraries" : <array of libraries meta information>
+	"transformations" : <array of transformationSchema>,
+	"libraries" : <array of librarySchema>
 
 }
 ```
 
 ```jsx
-// single transformation schema
+// single transformationSchema
 {
-	"file" (required): <path to the transformation code>,
-	"name" (required): <transformation name>,
-	"description" (optional): <transformation description>,
-	"type" (optional): <default as transformation>,
-	"test-input-file" (optional) : <set of events to test the transformation>,
-  "expected-output" (optional) : <expected set of output events for the above     input after running the transformation code>
-
+  "file" (required): <path to the transformation code>,
+  "name" (required): <transformation name>,
+  "description" (optional): <transformation description>,
+  "test-input-file" (optional) : <path to file containing an array of events to test the transformation>,
+  "expected-output" (optional) : <path to file containing an array of expected output for the above input after running the transformation code>
 }
 ```
 
 ```jsx
-// single library schema
+// single librarySchema
 {
-	"file" (required): <path to the library code>,
-	"name" (required): <library name: this is the name by which to import it in any transformation code>,
-	"description" (optional): <library description> ,
-	"type" (optional): <default as library>
+  "file" (required): <path to the library code>,
+  "name" (required): <library name: this is the name by which to import it in any transformation code>,
+  "description" (optional): <library description> ,
 }
 ```
 
@@ -67,29 +64,25 @@ For examples of using the action, checkout the [rudder-transformation-action](ht
       "file": "./code/t1.js",
       "name": "action-T1",
       "description": "action-T1",
-      "type": "transformation",
       "test-input-file": "./code/events.json",
       "expected-output": "./code/expected.json"
     },
     {
       "file": "./code/t2.js",
       "name": "action-T2",
-      "description": "action-T2",
-      "type": "transformation"
+      "description": "action-T2"
     }
   ],
-	"libraries": [
+  "libraries": [
     {
       "file": "./code/lib1.js",
       "name": "lib1",
-      "description": "action-lib1",
-      "type": "library"
+      "description": "action-lib1"
     },
     {
       "file": "./code/lib2.js",
       "name": "lib2",
-      "description": "action-lib2",
-      "type": "library"
+      "description": "action-lib2"
     }
   ]
 }
@@ -98,5 +91,7 @@ For examples of using the action, checkout the [rudder-transformation-action](ht
 > Note: All paths to files above should be relative to the base repo path
 
 - `email` (required) : RudderStack app workspace email.
-- `accessKey` (required) : RudderStack app corresponding accessKey.
+- `accessToken` (required) : RudderStack app corresponding accessToken.
 - `uploadTestArtifact` (optional) : boolean flag on whether to upload the individual transformation outputs after running the  transformation on the test events and it's diff from expected output for each.
+	- When test-input-file is provided, actual outputs of all transformations with respective inputs from test-input-file are dumped into artifacts
+	- When expected-output is provided, the above outputs are validated against the contents in expected-output and a diff is returned in artifacts if there is any.
