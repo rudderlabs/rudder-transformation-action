@@ -16456,19 +16456,11 @@ async function testAndPublish() {
     }
     for (let i = 0; i < successResults.length; i++) {
       let transformerVersionID = successResults[i].transformerVersionID;
-      if (!transformationDict.hasOwnProperty(transformerVersionID) || !transformationDict[transformerVersionID].hasOwnProperty("expected-output")) {
+      if (!transformationDict.hasOwnProperty(transformerVersionID)) {
         continue;
       }
 
-      let expectedOutputfile =
-        transformationDict[transformerVersionID][
-          "expected-output"
-        ];
-      let expectedOutput = expectedOutputfile
-        ? JSON.parse(fs.readFileSync(expectedOutputfile))
-        : "";
-
-      let apiOutput = successResults[i].result.output;
+      let apiOutput = successResults[i].result.output.transformedEvents;
 
       let transformationName =
         transformationDict[transformerVersionID].name;
@@ -16480,6 +16472,18 @@ async function testAndPublish() {
       testOutputFiles.push(
         `${testOutputDir}/${transformationName}_output.json`
       );
+
+      if (!transformationDict[transformerVersionID].hasOwnProperty("expected-output")) {
+        continue;
+      }
+
+      let expectedOutputfile =
+        transformationDict[transformerVersionID][
+          "expected-output"
+        ];
+      let expectedOutput = expectedOutputfile
+        ? JSON.parse(fs.readFileSync(expectedOutputfile))
+        : "";
 
       if (expectedOutput == "") {
         continue;
