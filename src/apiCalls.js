@@ -108,12 +108,13 @@ async function testTransformationAndLibrary(transformations, libraries) {
   );
 }
 
-async function publish(transformations, libraries) {
+async function publish(transformations, libraries, commitId) {
   return axios.default.post(
     `${publishEndpoint}`,
     {
       transformations,
-      libraries
+      libraries,
+      commitId,
     },
     {
       auth: {
