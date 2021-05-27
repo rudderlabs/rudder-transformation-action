@@ -28,7 +28,7 @@ const serverList = {
 const transformationNameToId = {};
 const libraryNameToId = {};
 
-const testOnly = (process.env.TEST_ONLY == 'true');
+const testOnly = (process.env.TEST_ONLY !== 'false');
 const commitId = process.env.GITHUB_SHA || '';
 
 function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
