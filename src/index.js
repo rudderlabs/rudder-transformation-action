@@ -5,6 +5,7 @@ const artifact = require("@actions/artifact");
 const { detailedDiff } = require("deep-object-diff");
 var jsonDiff = require("json-diff");
 const artifactClient = artifact.create();
+const _ = require("lodash");
 const {
   getAllTransformations,
   getAllLibraries,
@@ -178,7 +179,7 @@ async function testAndPublish() {
       let apiOutput = successResults[i].result.output.transformedEvents;
 
       let transformationName =
-        transformationDict[transformerVersionID].name;
+        _.camelCase(transformationDict[transformerVersionID].name);
 
       fs.writeFileSync(
         `${testOutputDir}/${transformationName}_output.json`,
