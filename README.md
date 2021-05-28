@@ -31,6 +31,7 @@ with:
 - `uploadTestArtifact` (optional) : boolean flag on whether to upload the individual transformation outputs after running the  transformation on the test events and it's diff from expected output for each.
 	- When test-input-file is provided, actual outputs of all transformations with respective inputs from test-input-file are dumped into artifacts
 	- When expected-output is provided, the above outputs are validated against the contents in expected-output and a diff is returned in artifacts if there is any.
+	- Transformation outputs of the test data is written in its respective `camelCase(Name)_output` file
 - `metaPath` (required) : The path to the meta file, the meta file let's the action know what transformations and libraries to test based on set of input events and the expected output, as well publish these transformations and libraries if the test passes.
 
       Meta file structure
