@@ -14,9 +14,9 @@ with:
     uploadTestArtifact: true
 ```
 
-> Note: The action does the work of testing a transformation for a given set of events, it's creation and updation along with any custom libraries using the [transformation API](https://docs.rudderstack.com/adding-a-new-user-transformation-in-rudderstack/rudderstack-transformation-api). Read more in [this blog post](https://rudderstack.com/blog/rudderstacks-transformations-api). 
+> Note: The action does the work of testing a transformation for a given set of events, it's creation and updation along with any custom libraries using the [transformation API](https://rudderstack.com/docs/transformations/rudderstack-transformation-api/). Read more in [this blog post](https://rudderstack.com/blog/rudderstacks-transformations-api). 
 
-> For the action to work, one would need the workspace email and accessToken. Learn how to generate accessToken [here](https://docs.rudderstack.com/adding-a-new-user-transformation-in-rudderstack/rudderstack-transformation-api/api-access-token)
+> For the action to work, one would need the workspace email and accessToken. Learn how to generate accessToken [here](https://rudderstack.com/docs/transformations/api-access-token/)
 
 > For examples of using the action, checkout this [sample repository](https://github.com/rudderlabs/rudder-transformation-action-code/tree/main/.github/workflows)
 
