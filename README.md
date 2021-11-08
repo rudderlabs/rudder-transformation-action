@@ -1,6 +1,6 @@
 # RudderStack Transformation Action
 
-This Github Action allows developers to test and publish user transformations and custom libraries directly from their development repository. To know more about user transformations check [here](https://docs.rudderstack.com/adding-a-new-user-transformation-in-rudderstack).
+This Github Action allows developers to test and publish user transformations and custom libraries directly from their development repository. To know more about user transformations check [here](https://rudderstack.com/docs/transformations).
 
 ## Usage
 
