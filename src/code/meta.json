@@ -1,0 +1,33 @@
+{
+  "transformations": [
+    {
+      "file": "./code/code.js",
+      "name": "Transformation1",
+      "description": "Description 1",
+      "test-input-file": "./code/events.json",
+      "expected-output": "./code/expected.json"
+    },
+    {
+      "file": "./code/code_2.js",
+      "name": "Transformation2",
+      "description": "Description 2"
+    },
+    {
+      "file": "./code/code_3.js",
+      "name": "Transformation3",
+      "description": "Description 3"
+    }
+  ],
+  "libraries": [
+    {
+      "file": "./code/lib1.js",
+      "name": "getFinanceData",
+      "description": "Description 1"
+    },
+    {
+      "file": "./code/lib2.js",
+      "name": "getUserAddress",
+      "description": "Description 2"
+    }
+  ]
+}
