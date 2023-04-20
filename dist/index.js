@@ -8777,8 +8777,9 @@ var assert = __nccwpck_require__(2357);
 var debug = __nccwpck_require__(1133);
 
 // Create handlers that pass events from native requests
+var events = ["abort", "aborted", "connect", "error", "socket", "timeout"];
 var eventHandlers = Object.create(null);
-["abort", "aborted", "connect", "error", "socket", "timeout"].forEach(function (event) {
+events.forEach(function (event) {
   eventHandlers[event] = function (arg1, arg2, arg3) {
     this._redirectable.emit(event, arg1, arg2, arg3);
   };
@@ -8922,8 +8923,15 @@ RedirectableRequest.prototype.removeHeader = function (name) {
 RedirectableRequest.prototype.setTimeout = function (msecs, callback) {
   var self = this;
 
+  // Destroys the socket on timeout
+  function destroyOnTimeout(socket) {
+    socket.setTimeout(msecs);
+    socket.removeListener("timeout", socket.destroy);
+    socket.addListener("timeout", socket.destroy);
+  }
+
   // Sets up a timer to trigger a timeout event
-  function startTimer() {
+  function startTimer(socket) {
     if (self._timeout) {
       clearTimeout(self._timeout);
     }
@@ -8931,6 +8939,7 @@ RedirectableRequest.prototype.setTimeout = function (msecs, callback) {
       self.emit("timeout");
       clearTimer();
     }, msecs);
+    destroyOnTimeout(socket);
   }
 
   // Stops a timeout from triggering
@@ -8960,7 +8969,7 @@ RedirectableRequest.prototype.setTimeout = function (msecs, callback) {
 
   // Start the timer if or when the socket is opened
   if (this.socket) {
-    startTimer();
+    startTimer(this.socket);
   }
   else {
     this._currentRequest.once("socket", startTimer);
@@ -35311,7 +35320,7 @@ function wrappy (fn, cb) {
 
 const axios = __nccwpck_require__(6545);
 const core = __nccwpck_require__(2186);
-const serverEndpoint = core.getInput("serverEndpoint") || 'https://api.dev.rudderlabs.com';
+const serverEndpoint = core.getInput("serverEndpoint") || 'https://api.rudderstack.com';
 const createTransformerEndpoint = `${serverEndpoint}/transformations`;
 const createLibraryEndpoint = `${serverEndpoint}/libraries`;
 const testEndpoint = `${serverEndpoint}/transformations/libraries/test`;
@@ -35323,8 +35332,8 @@ async function getAllTransformations() {
   console.log(listTransformationsEndpoint);
   return axios.default.get(listTransformationsEndpoint, {
     auth: {
-      username: process.env.email,
-      password: process.env.accessKey
+      username: core.getInput("email"),
+      password: core.getInput("accessToken")
     }
   });
 }
@@ -35332,8 +35341,8 @@ async function getAllTransformations() {
 async function getAllLibraries() {
   return axios.default.get(listLibrariesEndpoint, {
     auth: {
-      username: process.env.email,
-      password: process.env.accessKey
+      username: core.getInput("email"),
+      password: core.getInput("accessToken")
     }
   });
 }
@@ -35349,8 +35358,8 @@ async function createTransformer(name, description, code, language) {
     },
     {
       auth: {
-        username: process.env.email,
-        password: process.env.accessKey
+        username: core.getInput("email"),
+        password: core.getInput("accessToken")
       }
     }
   );
@@ -35365,8 +35374,8 @@ async function updateTransformer(id, description, code) {
     },
     {
       auth: {
-        username: process.env.email,
-        password: process.env.accessKey
+        username: core.getInput("email"),
+        password: core.getInput("accessToken")
       }
     }
   );
@@ -35383,8 +35392,8 @@ async function createLibrary(name, description, code, language) {
     },
     {
       auth: {
-        username: process.env.email,
-        password: process.env.accessKey
+        username: core.getInput("email"),
+        password: core.getInput("accessToken")
       }
     }
   );
@@ -35399,8 +35408,8 @@ async function updateLibrary(id, description, code) {
     },
     {
       auth: {
-        username: process.env.email,
-        password: process.env.accessKey
+        username: core.getInput("email"),
+        password: core.getInput("accessToken")
       }
     }
   );
@@ -35415,8 +35424,8 @@ async function testTransformationAndLibrary(transformations, libraries) {
     },
     {
       auth: {
-        username: process.env.email,
-        password: process.env.accessKey
+        username: core.getInput("email"),
+        password: core.getInput("accessToken")
       }
     }
   );
@@ -35432,8 +35441,8 @@ async function publish(transformations, libraries, commitId) {
     },
     {
       auth: {
-        username: process.env.email,
-        password: process.env.accessKey
+        username: core.getInput("email"),
+        password: core.getInput("accessToken")
       }
     }
   );
@@ -35477,7 +35486,7 @@ const {
 
 const testOutputDir = "./test-outputs";
 const uploadTestArtifact = core.getInput("uploadTestArtifact") || false;
-const metaFilePath = "./code/meta.json";
+const metaFilePath = core.getInput("metaPath");
 
 const serverList = {
   transformations: [],
