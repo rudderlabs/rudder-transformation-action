@@ -1,0 +1,18 @@
+[
+  {
+    "revenue": 0,
+    "price": 0,
+    "profit": 0,
+    "city": "no data found",
+    "country": "no data found",
+    "street": "no data found"
+  },
+  {
+    "revenue": 0,
+    "price": 20,
+    "profit": 20,
+    "city": "no data found",
+    "country": "no data found",
+    "street": "no data found"
+  }
+]

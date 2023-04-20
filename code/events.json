@@ -2,6 +2,7 @@
   {
     "userId": "identified user id",
     "anonymousId": "anon-id-new",
+    "messageId":"some-messgae-id",
     "context": {
       "traits": {
         "trait1": "new-val"
@@ -20,6 +21,7 @@
   {
     "userId": "identified user id",
     "anonymousId": "anon-id-new",
+    "messageId":"some-messgae-id",
     "context": {
       "traits": {
         "trait1": "new-val"

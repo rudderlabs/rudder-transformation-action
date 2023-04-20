@@ -9,6 +9,7 @@ const listTransformationsEndpoint = `${serverEndpoint}/transformations`;
 const listLibrariesEndpoint = `${serverEndpoint}/libraries`;
 
 async function getAllTransformations() {
+  console.log(listTransformationsEndpoint);
   return axios.default.get(listTransformationsEndpoint, {
     auth: {
       username: core.getInput("email"),
@@ -26,13 +27,14 @@ async function getAllLibraries() {
   });
 }
 
-async function createTransformer(name, description, code) {
+async function createTransformer(name, description, code, language) {
   return axios.default.post(
     `${createTransformerEndpoint}?publish=false`,
     {
       name,
       description,
-      code
+      code,
+      language
     },
     {
       auth: {
@@ -59,13 +61,14 @@ async function updateTransformer(id, description, code) {
   );
 }
 
-async function createLibrary(name, description, code) {
+async function createLibrary(name, description, code, language) {
   return axios.default.post(
     `${createLibraryEndpoint}?publish=false`,
     {
       name,
       description,
-      code
+      code,
+      language
     },
     {
       auth: {
