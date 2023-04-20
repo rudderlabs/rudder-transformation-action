@@ -19,7 +19,7 @@ const {
 
 const testOutputDir = "./test-outputs";
 const uploadTestArtifact = core.getInput("uploadTestArtifact") || false;
-const metaFilePath = "./code/meta.json";
+const metaFilePath = core.getInput("metaPath");
 
 const serverList = {
   transformations: [],
