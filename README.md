@@ -53,7 +53,7 @@ with:
     "language" (required): <transformation language>,
     "test-input-file" (optional) : <path to file containing an array of events to test the transformation>,
     "expected-output" (optional) : <path to file containing an array of expected output for the above input after running the transformation code>
-}
+     }
      ```
       
      ```jsx
