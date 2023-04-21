@@ -62,7 +62,7 @@ with:
    "file" (required): <path to the library code>,
    "name" (required): <library name: this is the name by which to import it in any transformation code>,
    "description" (optional): <library description>,
-   "language" (required): <library language>,
+   "language" (required): <library language>
       }
      ```
       
