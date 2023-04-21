@@ -50,6 +50,7 @@ with:
         "file" (required): <path to the transformation code>,
         "name" (required): <transformation name>,
         "description" (optional): <transformation description>,
+	"language"(required): <transformation language>,
         "test-input-file" (optional) : <path to file containing an array of events to test the transformation>,
         "expected-output" (optional) : <path to file containing an array of expected output for the above input after running the transformation code>
       }
@@ -61,39 +62,89 @@ with:
         "file" (required): <path to the library code>,
         "name" (required): <library name: this is the name by which to import it in any transformation code>,
         "description" (optional): <library description> ,
+	"language"(required): <library language>,
       }
      ```
       
      ```jsx
       // example meta.json
       {
-        "transformations": [
-          {
-            "file": "./code/t1.js",
-            "name": "action-T1",
-            "description": "action-T1",
-            "test-input-file": "./code/events.json",
-            "expected-output": "./code/expected.json"
-          },
-          {
-            "file": "./code/t2.js",
-            "name": "action-T2",
-            "description": "action-T2"
-          }
-        ],
-        "libraries": [
-          {
-            "file": "./code/lib1.js",
-            "name": "lib1",
-            "description": "action-lib1"
-          },
-          {
-            "file": "./code/lib2.js",
-            "name": "lib2",
-            "description": "action-lib2"
-          }
-        ]
-      }
+  "transformations": [
+    {
+      "file": "./code/code.js",
+      "name": "action-T14",
+      "description": "action-T14",
+      "type": "transformation",
+      "test-input-file": "./code/events.json",
+      "expected-output": "./code/expected.json",
+      "language": "javascript"
+    },
+    {
+      "file": "./code/code.py",
+      "name": "py-action",
+      "description": "py-action",
+      "type": "transformation",
+      "test-input-file": "./code/events.json",
+      "expected-output": "./code/expected.json",
+      "language":"pythonfaas"
+    },
+    {
+      "file": "./code/code_2.js",
+      "name": "action-T14_2",
+      "description": "action-T13_2",
+      "type": "transformation",
+      "language": "javascript"
+    },
+    {
+      "file": "./code/code_2.py",
+      "name": "py-action2",
+      "description": "py-action2",
+      "type": "transformation",
+      "language":"pythonfaas"
+    },
+    {
+      "file": "./code/code_3.js",
+      "name": "action-T14_3",
+      "description": "action-T13_3",
+      "type": "transformation",
+      "language": "javascript"
+    },
+    {
+      "file": "./code/code_3.py",
+      "name": "py-action3",
+      "description": "py-action3",
+      "type": "transformation",
+      "language":"pythonfaas"
+    }
+    
+  ],
+  "libraries": [
+    {
+      "file": "./code/lib1.js",
+      "name": "getFinanceData13",
+      "description": "action-T13-lib",
+      "language":"javascript"
+    },
+    {
+      "file": "./code/lib1.py",
+      "name": "getFinanceData14",
+      "description": "py-actionlib1",
+      "language":"pythonfaas"
+    },
+    {
+      "file": "./code/lib2.js",
+      "name": "getUserAddress13",
+      "description": "action-T13_2-lib",
+      "language":"javascript"
+    },
+    {
+      "file": "./code/lib2.py",
+      "name": "getUserAddress14",
+      "description": "py-actionlib2",
+      "language":"pythonfaas"
+    }
+  ]
+}
      ```
 
 > Note: All paths to files above should be relative to the base repo path
