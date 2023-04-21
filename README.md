@@ -47,13 +47,13 @@ with:
      ```jsx
       // single transformationSchema
       {
-        "file" (required): <path to the transformation code>,
-        "name" (required): <transformation name>,
-        "description" (optional): <transformation description>,
-	"language" (required): <transformation language>,
-        "test-input-file" (optional) : <path to file containing an array of events to test the transformation>,
-        "expected-output" (optional) : <path to file containing an array of expected output for the above input after running the transformation code>
-      }
+    "file" (required): <path to the transformation code>,
+    "name" (required): <transformation name>,
+    "description" (optional): <transformation description>,
+    "language" (required): <transformation language>,
+    "test-input-file" (optional) : <path to file containing an array of events to test the transformation>,
+    "expected-output" (optional) : <path to file containing an array of expected output for the above input after running the transformation code>
+}
      ```
       
      ```jsx
