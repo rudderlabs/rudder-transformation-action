@@ -154,8 +154,8 @@ async function testAndPublish() {
       librariesTest
     );
     core.info(`Test api output: ${JSON.stringify(res.data)}`);
-
-    core.info("Comparing api output with expected output...");
+    core.info("Running test...");
+    core.info("We are testing with default payload since no test input is provided");
     if (res.data.result.failedTestResults.length > 0) {
       core.info(JSON.stringify(res.data.result.failedTestResults));
       throw new Error(
@@ -234,6 +234,9 @@ async function testAndPublish() {
     }
 
     if (errorResults.length > 0) {
+      for (let i = 0; i < errorResults.length; i++) {
+          core.info(errorResults[i]+'\n');
+         }
       throw new Error(errorResults.join(", "));
     }
 
