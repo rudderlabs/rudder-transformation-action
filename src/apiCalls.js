@@ -1,6 +1,7 @@
 const axios = require("axios");
 const core = require("@actions/core");
-const serverEndpoint = core.getInput("serverEndpoint") || 'https://api.rudderstack.com';
+const serverEndpoint =
+  core.getInput("serverEndpoint") || "https://api.rudderstack.com";
 const createTransformerEndpoint = `${serverEndpoint}/transformations`;
 const createLibraryEndpoint = `${serverEndpoint}/libraries`;
 const testEndpoint = `${serverEndpoint}/transformations/libraries/test`;
@@ -9,12 +10,11 @@ const listTransformationsEndpoint = `${serverEndpoint}/transformations`;
 const listLibrariesEndpoint = `${serverEndpoint}/libraries`;
 
 async function getAllTransformations() {
-  console.log(listTransformationsEndpoint);
   return axios.default.get(listTransformationsEndpoint, {
     auth: {
       username: core.getInput("email"),
-      password: core.getInput("accessToken")
-    }
+      password: core.getInput("accessToken"),
+    },
   });
 }
 
@@ -22,8 +22,8 @@ async function getAllLibraries() {
   return axios.default.get(listLibrariesEndpoint, {
     auth: {
       username: core.getInput("email"),
-      password: core.getInput("accessToken")
-    }
+      password: core.getInput("accessToken"),
+    },
   });
 }
 
@@ -34,29 +34,30 @@ async function createTransformer(name, description, code, language) {
       name,
       description,
       code,
-      language
+      language,
     },
     {
       auth: {
         username: core.getInput("email"),
-        password: core.getInput("accessToken")
-      }
+        password: core.getInput("accessToken"),
+      },
     }
   );
 }
 
-async function updateTransformer(id, description, code) {
+async function updateTransformer(id, description, code, language) {
   return axios.default.post(
     `${createTransformerEndpoint}/${id}?publish=false`,
     {
       description,
-      code
+      code,
+      language,
     },
     {
       auth: {
         username: core.getInput("email"),
-        password: core.getInput("accessToken")
-      }
+        password: core.getInput("accessToken"),
+      },
     }
   );
 }
@@ -68,29 +69,30 @@ async function createLibrary(name, description, code, language) {
       name,
       description,
       code,
-      language
+      language,
     },
     {
       auth: {
         username: core.getInput("email"),
-        password: core.getInput("accessToken")
-      }
+        password: core.getInput("accessToken"),
+      },
     }
   );
 }
 
-async function updateLibrary(id, description, code) {
+async function updateLibrary(id, description, code, language) {
   return axios.default.post(
     `${createLibraryEndpoint}/${id}?publish=false`,
     {
       description,
-      code
+      code,
+      language,
     },
     {
       auth: {
         username: core.getInput("email"),
-        password: core.getInput("accessToken")
-      }
+        password: core.getInput("accessToken"),
+      },
     }
   );
 }
@@ -100,13 +102,13 @@ async function testTransformationAndLibrary(transformations, libraries) {
     `${testEndpoint}`,
     {
       transformations,
-      libraries
+      libraries,
     },
     {
       auth: {
         username: core.getInput("email"),
-        password: core.getInput("accessToken")
-      }
+        password: core.getInput("accessToken"),
+      },
     }
   );
 }
@@ -122,8 +124,8 @@ async function publish(transformations, libraries, commitId) {
     {
       auth: {
         username: core.getInput("email"),
-        password: core.getInput("accessToken")
-      }
+        password: core.getInput("accessToken"),
+      },
     }
   );
 }
@@ -136,5 +138,5 @@ module.exports = {
   updateTransformer,
   updateLibrary,
   testTransformationAndLibrary,
-  publish
+  publish,
 };

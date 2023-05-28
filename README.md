@@ -47,20 +47,22 @@ with:
      ```jsx
       // single transformationSchema
       {
-    "file" (required): <path to the transformation code>,
-    "name" (required): <transformation name>,
-    "description" (optional): <transformation description>,
-    "test-input-file" (optional) : <path to file containing an array of events to test the transformation>,
-    "expected-output" (optional) : <path to file containing an array of expected output for the above input after running the transformation code>
-     }
+        "file" (required): <path to the transformation code>,
+        "name" (required): <transformation name>,
+        "description" (optional): <transformation description>,
+        "language" (required): <transformation language>,
+        "test-input-file" (optional) : <path to file containing an array of events to test the transformation>,
+        "expected-output" (optional) : <path to file containing an array of expected output for the above input after running the transformation code>
+      }
      ```
       
      ```jsx
       // single librarySchema
       {
-   "file" (required): <path to the library code>,
-   "name" (required): <library name: this is the name by which to import it in any transformation code>,
-   "description" (optional): <library description>,
+        "file" (required): <path to the library code>,
+        "name" (required): <library name: this is the name by which to import it in any transformation code>,
+        "description" (optional): <library description>,
+        "language" (required): <library language>,
       }
      ```
       
@@ -69,32 +71,37 @@ with:
       {
         "transformations": [
           {
-            "file": "./code/t1.js",
+            "file": "./code/code.js",
             "name": "action-T1",
-            "description": "action-T1",
+            "description": "javascript transformation T1",
+            "language": "javascript",
             "test-input-file": "./code/events.json",
             "expected-output": "./code/expected.json"
           },
           {
-            "file": "./code/t2.js",
+            "file": "./code/code_2.py",
             "name": "action-T2",
-            "description": "action-T2"
+            "description": "python transformation T2",
+            "language": "pythonfaas",
           }
         ],
         "libraries": [
           {
             "file": "./code/lib1.js",
-            "name": "lib1",
-            "description": "action-lib1"
+            "name": "action-L1",
+            "description": "javascript transformation library L1",
+            "language": "javascript"
           },
           {
-            "file": "./code/lib2.js",
-            "name": "lib2",
-            "description": "action-lib2"
+            "file": "./code/lib2.py",
+            "name": "action-L2",
+            "description": "python transformation library L2"
+            "language": "pythonfaas"
           }
         ]
       }
      ```
 
-> Note: All paths to files above should be relative to the base repo path
-
+> Note:
+-  Allowed values for language are `javascript` and `pythonfaas` (internal implementation to represent python)
+-  All paths to files above should be relative to the base repo path
