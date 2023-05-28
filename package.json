@@ -1,6 +1,6 @@
 {
   "name": "rudder-transformer-action",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
   "main": "src/index.js",
   "scripts": {
@@ -16,6 +16,7 @@
     "deep-object-diff": "^1.1.9",
     "fs": "0.0.1-security",
     "i": "^0.3.6",
+    "qs": "^6.11.1",
     "json-diff": "^0.5.4",
     "lodash": "^4.17.21",
     "npm": "^9.6.7"
