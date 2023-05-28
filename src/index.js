@@ -93,7 +93,7 @@ async function testAndPublish() {
         core.info(`updated transformation: ${tr.name}`);
       } else {
         // create new transformer
-        res = await createTransformer(tr.name, tr.description, code);
+        res = await createTransformer(tr.name, tr.description, code, tr.language);
         core.info(`created transformation: ${tr.name}`);
       }
       transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
@@ -111,7 +111,7 @@ async function testAndPublish() {
         core.info(`updated library: ${lib.name}`);
       } else {
         // create a new library
-        res = await createLibrary(lib.name, lib.description, code);
+        res = await createLibrary(lib.name, lib.description, code, lib.language);
         core.info(`created library: ${lib.name}`);
       }
       libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
