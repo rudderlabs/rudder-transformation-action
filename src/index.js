@@ -278,16 +278,33 @@ async function publishTransformation(
   core.info(`Publish result: ${JSON.stringify(res.data)}`);
 }
 
+function colorize(message, color) {
+  const colors = {
+    reset: "\x1b[0m",
+    red: "\x1b[31m",
+    green: "\x1b[32m",
+    yellow: "\x1b[33m",
+    blue: "\x1b[34m",
+    magenta: "\x1b[35m",
+    cyan: "\x1b[36m",
+    white: "\x1b[37m",
+  };
+
+  return `${colors[color]}${message}${colors.reset}`;
+}
+
 // Log failed tests
 function logFailedTests(failedTests) {
-  core.info("Failed Tests:");
+  core.info(colorize("\nFailed Tests:", "yellow"));
   for (let i = 0; i < failedTests.length; i++) {
     const test = failedTests[i];
-    core.info(`   ID: ${test.id}`);
-    core.info(`   Name: ${test.name}`);
-    core.info(`     Error: ${JSON.stringify(test.result)}\n`);
+
+    core.info(colorize(`   ID: ${test.id}`, "red"));
+    core.info(colorize(`   Name: ${test.name}`, "red"));
+    core.info(colorize(`   Error: ${JSON.stringify(test.result)}\n`, "red"));
   }
 }
+
 async function testAndPublish() {
   const transformationDict = {};
   const libraryDict = {};
