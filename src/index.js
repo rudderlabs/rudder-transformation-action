@@ -8,22 +8,18 @@ const _ = require("lodash");
 const {
   getAllTransformations,
   getAllLibraries,
-  createTransformer,
+  createTransformation,
   createLibrary,
-  updateTransformer,
+  updateTransformation,
   updateLibrary,
   testTransformationAndLibrary,
   publish,
 } = require("./apiCalls");
 
 const testOutputDir = "./test-outputs";
-const uploadTestArtifact = core.getInput("uploadTestArtifact") || false;
+const uploadTestArtifact =
+  Boolean(core.getInput("uploadTestArtifact")) || false;
 const metaFilePath = core.getInput("metaPath");
-
-const serverList = {
-  transformations: [],
-  libraries: [],
-};
 
 const transformationNameToId = {};
 const libraryNameToId = {};
@@ -62,29 +58,26 @@ function buildNameToIdMap(objectArr, type) {
 
 // Initialize the script.
 async function init() {
-  core.info(`Initializing server list`);
+  let transformations = [];
+  let libraries = [];
+
   const transformationsResponse = await getAllTransformations();
-  serverList.transformations = transformationsResponse.data
+  transformations = transformationsResponse.data
     ? JSON.parse(JSON.stringify(transformationsResponse.data.transformations))
     : [];
 
   const librariesResponse = await getAllLibraries();
-  serverList.libraries = librariesResponse.data
+  libraries = librariesResponse.data
     ? JSON.parse(JSON.stringify(librariesResponse.data.libraries))
     : [];
 
-  buildNameToIdMap(serverList.transformations, "tr");
-  buildNameToIdMap(serverList.libraries, "lib");
-
-  core.info("Server lists initialized successfully.");
+  buildNameToIdMap(transformations, "tr");
+  buildNameToIdMap(libraries, "lib");
 }
 
 // Create or update a transformation.
-async function createOrUpdateTransformation(
-  transformations,
-  transformationDict
-) {
-  core.info(`Transformations create/update started!`);
+async function upsertTransformations(transformations, transformationDict) {
+  core.info(`Upserting transformations`);
   for (let i = 0; i < transformations.length; i++) {
     let tr = transformations[i];
     let code = fs.readFileSync(tr.file, "utf-8");
@@ -92,21 +85,29 @@ async function createOrUpdateTransformation(
     if (transformationNameToId[tr.name]) {
       // update existing transformer and get a new versionId
       let id = transformationNameToId[tr.name];
-      res = await updateTransformer(id, tr.description, code, tr.language);
-      core.info(`Updated transformation: ${tr.name}`);
+      res = await updateTransformation(
+        id,
+        tr.name,
+        tr.description,
+        code,
+        tr.language
+      );
     } else {
       // create new transformer
-      res = await createTransformer(tr.name, tr.description, code, tr.language);
-      core.info(`Created transformation: ${tr.name}`);
+      res = await createTransformation(
+        tr.name,
+        tr.description,
+        code,
+        tr.language
+      );
     }
     transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
   }
-  core.info("Transformations create/update done!");
 }
 
 // Create or update a library.
-async function createOrUpdateLibrary(libraries, libraryDict) {
-  core.info(`Transformations create/update started!`);
+async function upsertLibraries(libraries, libraryDict) {
+  core.info(`Upserting libraries`);
   for (let i = 0; i < libraries.length; i++) {
     let lib = libraries[i];
     let code = fs.readFileSync(lib.file, "utf-8");
@@ -123,7 +124,6 @@ async function createOrUpdateLibrary(libraries, libraryDict) {
     }
     libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
   }
-  core.info("Libraries create/update done!");
 }
 
 // Build the test suite.
@@ -133,7 +133,7 @@ async function buildTestSuite(
   libraryDict,
   librariesTest
 ) {
-  core.info("Building test suite...");
+  core.info("Building test suite");
   for (let i = 0; i < Object.keys(transformationDict).length; i++) {
     let trVersionId = Object.keys(transformationDict)[i];
     let testInputPath =
@@ -182,6 +182,7 @@ async function runTestSuite(transformationTest, librariesTest) {
         2
       )}`
     );
+    logFailedTests(res.data.result.failedTestResults);
     throw new Error(
       "Failures occured while running tests against input events"
     );
@@ -196,7 +197,7 @@ async function compareOutput(
   transformationDict,
   testOutputFiles
 ) {
-  core.info("Comparing api output with expected output...");
+  core.info("Comparing api output with expected output");
   for (let i = 0; i < successResults.length; i++) {
     let transformerVersionID = successResults[i].transformerVersionID;
     if (!transformationDict.hasOwnProperty(transformerVersionID)) {
@@ -256,8 +257,8 @@ async function compareOutput(
 // Upload the test results to an artifact store.
 async function uploadTestArtifacts(testOutputFiles) {
   // upload artifact
-  if (uploadTestArtifact === "true") {
-    core.info("Uploading test api output...");
+  if (uploadTestArtifact) {
+    core.info("Uploading test api output");
     await artifactClient.uploadArtifact(
       "transformer-test-results",
       testOutputFiles,
@@ -267,11 +268,24 @@ async function uploadTestArtifacts(testOutputFiles) {
 }
 
 // Publish the transformations and libraries.
-async function publishTr(transformationTest, librariesTest, commitId) {
+async function publishTransformation(
+  transformationTest,
+  librariesTest,
+  commitId
+) {
   // publish
-  if (!testOnly) {
-    res = await publish(transformationTest, librariesTest, commitId);
-    core.info(`Publish result: ${JSON.stringify(res.data)}`);
+  res = await publish(transformationTest, librariesTest, commitId);
+  core.info(`Publish result: ${JSON.stringify(res.data)}`);
+}
+
+// Log failed tests
+function logFailedTests(failedTests) {
+  core.info("Failed Tests:");
+  for (let i = 0; i < failedTests.length; i++) {
+    const test = failedTests[i];
+    core.info(`   ID: ${test.id}`);
+    core.info(`   Name: ${test.name}`);
+    core.info(`     Error: ${JSON.stringify(test.result)}\n`);
   }
 }
 async function testAndPublish() {
@@ -289,8 +303,8 @@ async function testAndPublish() {
 
     core.info("List of transformations and libraries successfully fetched");
 
-    await createOrUpdateTransformation(transformations, transformationDict);
-    await createOrUpdateLibrary(libraries, libraryDict);
+    await upsertTransformations(transformations, transformationDict);
+    await upsertLibraries(libraries, libraryDict);
 
     const transformationTest = [];
     const librariesTest = [];
@@ -302,11 +316,15 @@ async function testAndPublish() {
       librariesTest
     );
 
-    const successResults = (
+    const testSuiteResult = (
       await runTestSuite(transformationTest, librariesTest)
-    ).data.result.successTestResults;
+    ).data.result;
 
-    await compareOutput(successResults, transformationDict, testOutputFiles);
+    await compareOutput(
+      testSuiteResult.successTestResults,
+      transformationDict,
+      testOutputFiles
+    );
 
     uploadTestArtifacts(testOutputFiles);
 
@@ -315,7 +333,9 @@ async function testAndPublish() {
     }
 
     core.info("Test Passed!!!");
-    publishTr(transformationTest, librariesTest, commitId);
+    if (!testOnly) {
+      publishTransformation(transformationTest, librariesTest, commitId);
+    }
   } catch (err) {
     core.setFailed(err.message);
   }
