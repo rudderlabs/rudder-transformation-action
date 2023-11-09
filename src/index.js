@@ -302,6 +302,8 @@ function logFailedTests(failedTests) {
     core.info(colorize(`   ID: ${test.id}`, "red"));
     core.info(colorize(`   Name: ${test.name}`, "red"));
     core.info(colorize(`   Error: ${JSON.stringify(test.result)}\n`, "red"));
+    core.info('\n' + '='.repeat(40) + '\n'); // Add a line of equal signs between logs
+
   }
 }
 
