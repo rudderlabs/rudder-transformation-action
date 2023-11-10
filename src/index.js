@@ -21,14 +21,14 @@ const uploadTestArtifact =
   Boolean(core.getInput("uploadTestArtifact")) || false;
 const metaFilePath = core.getInput("metaPath");
 
-const transformationNameToId = {};
-const libraryNameToId = {};
-
 const testOnly = process.env.TEST_ONLY !== "false";
 const commitId = process.env.GITHUB_SHA || "";
 
 // Load transformations and libraries from a local meta file.
-function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
+function getTransformationsAndLibrariesFromLocal() {
+  const transformations = [],
+    libraries = [];
+
   core.info(
     `Loading transformations and libraries from the meta file: ${metaFilePath}`
   );
@@ -40,51 +40,57 @@ function getTransformationsAndLibrariesFromLocal(transformations, libraries) {
   if (meta.libraries) {
     libraries.push(...meta.libraries);
   }
+  return { transformations, libraries };
 }
 
 // Build a map of object names to their respective IDs (e.g., transformation name to ID).
 function buildNameToIdMap(objectArr, type) {
+  const transformationNameToId = {};
+  const libraryNameToId = {};
+
   core.info(`Building name to id map`);
   if (type == "tr") {
     objectArr.map((tr) => {
       transformationNameToId[tr.name] = tr.id;
     });
+    return transformationNameToId;
   } else {
     objectArr.map((lib) => {
       libraryNameToId[lib.name] = lib.id;
     });
+    return libraryNameToId;
   }
 }
 
-// Initialize the script.
-async function init() {
-  let transformations = [];
-  let libraries = [];
+// Fetch transformation and libraries.
+async function loadTransformationsAndLibraries() {
+  let all_transformations = [];
+  let all_libraries = [];
 
   const transformationsResponse = await getAllTransformations();
-  transformations = transformationsResponse.data
+  all_transformations = transformationsResponse.data
     ? JSON.parse(JSON.stringify(transformationsResponse.data.transformations))
     : [];
 
   const librariesResponse = await getAllLibraries();
-  libraries = librariesResponse.data
+  all_libraries = librariesResponse.data
     ? JSON.parse(JSON.stringify(librariesResponse.data.libraries))
     : [];
 
-  buildNameToIdMap(transformations, "tr");
-  buildNameToIdMap(libraries, "lib");
+  return { all_transformations, all_libraries };
 }
 
-// Create or update a transformation.
-async function upsertTransformations(transformations, transformationDict) {
+// Create or update transformations
+async function upsertTransformations(transformations, transformationNameToId) {
+  const transformationDict = {};
   core.info(`Upserting transformations`);
-  for (let i = 0; i < transformations.length; i++) {
-    let tr = transformations[i];
-    let code = fs.readFileSync(tr.file, "utf-8");
+
+  for (const tr of transformations) {
+    const code = fs.readFileSync(tr.file, "utf-8");
     let res;
     if (transformationNameToId[tr.name]) {
       // update existing transformer and get a new versionId
-      let id = transformationNameToId[tr.name];
+      const id = transformationNameToId[tr.name];
       res = await updateTransformation(
         id,
         tr.name,
@@ -103,18 +109,20 @@ async function upsertTransformations(transformations, transformationDict) {
     }
     transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
   }
+
+  return transformationDict;
 }
 
 // Create or update a library.
-async function upsertLibraries(libraries, libraryDict) {
+async function upsertLibraries(libraries, libraryNameToId) {
+  const libraryDict = {};
   core.info(`Upserting libraries`);
-  for (let i = 0; i < libraries.length; i++) {
-    let lib = libraries[i];
-    let code = fs.readFileSync(lib.file, "utf-8");
+  for (const lib of libraries) {
+    const code = fs.readFileSync(lib.file, "utf-8");
     let res;
     if (libraryNameToId[lib.name]) {
       // update library and get a new versionId
-      let id = libraryNameToId[lib.name];
+      const id = libraryNameToId[lib.name];
       res = await updateLibrary(id, lib.description, code, lib.language);
       core.info(`Updated library: ${lib.name}`);
     } else {
@@ -124,21 +132,19 @@ async function upsertLibraries(libraries, libraryDict) {
     }
     libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
   }
+  return libraryDict;
 }
 
 // Build the test suite.
-async function buildTestSuite(
-  transformationDict,
-  transformationTest,
-  libraryDict,
-  librariesTest
-) {
+async function buildTestSuite(transformationDict, libraryDict) {
+  const transformationTest = [],
+    librariesTest = [];
   core.info("Building test suite");
-  for (let i = 0; i < Object.keys(transformationDict).length; i++) {
-    let trVersionId = Object.keys(transformationDict)[i];
-    let testInputPath =
+
+  for (const trVersionId of Object.keys(transformationDict)) {
+    const testInputPath =
       transformationDict[trVersionId]["test-input-file"] || "";
-    let testInput = testInputPath
+    const testInput = testInputPath
       ? JSON.parse(fs.readFileSync(testInputPath))
       : "";
     if (testInput) {
@@ -151,8 +157,8 @@ async function buildTestSuite(
     }
   }
 
-  for (let i = 0; i < Object.keys(libraryDict).length; i++) {
-    librariesTest.push({ versionId: Object.keys(libraryDict)[i] });
+  for (const versionId of Object.keys(libraryDict)) {
+    librariesTest.push({ versionId });
   }
 
   core.info(
@@ -162,18 +168,29 @@ async function buildTestSuite(
   core.info(
     `Final library versions to be tested: ${JSON.stringify(librariesTest)}`
   );
+  return { transformationTest, librariesTest };
 }
 
 // Run the test suite.
 async function runTestSuite(transformationTest, librariesTest) {
-  core.info("Running test...");
+  core.info("Running test suite for transformations and libraries");
 
   let res = await testTransformationAndLibrary(
     transformationTest,
     librariesTest
   );
-  core.info(`Test api output: ${JSON.stringify(res.data)}`);
 
+  core.info(
+    colorize(
+      `\nTotal tests ${
+        res.data.result.successTestResults.length +
+        res.data.result.failedTestResults.length
+      }, ${res.data.result.successTestResults.length} passed and ${
+        res.data.result.failedTestResults.length
+      } failed\n`,
+      "yellow"
+    )
+  );
   if (res.data.result.failedTestResults.length > 0) {
     logFailedTests(res.data.result.failedTestResults);
     throw new Error(
@@ -191,19 +208,21 @@ async function compareOutput(
   testOutputFiles
 ) {
   core.info("Comparing api output with expected output");
-  for (let i = 0; i < successResults.length; i++) {
-    let transformerVersionID = successResults[i].transformerVersionID;
+
+  for (const successResult of successResults) {
+    const transformerVersionID = successResult.transformerVersionID;
+
     if (!transformationDict.hasOwnProperty(transformerVersionID)) {
       continue;
     }
 
-    const apiOutput = successResults[i].result.output.transformedEvents;
+    const actualOutput = successResult.result.output.transformedEvents;
     const transformationName = transformationDict[transformerVersionID].name;
     const transformationHandleName = _.camelCase(transformationName);
 
     fs.writeFileSync(
       `${testOutputDir}/${transformationHandleName}_output.json`,
-      JSON.stringify(apiOutput, null, 2)
+      JSON.stringify(actualOutput, null, 2)
     );
     testOutputFiles.push(
       `${testOutputDir}/${transformationHandleName}_output.json`
@@ -217,9 +236,9 @@ async function compareOutput(
       continue;
     }
 
-    let expectedOutputfile =
+    const expectedOutputfile =
       transformationDict[transformerVersionID]["expected-output"];
-    let expectedOutput = expectedOutputfile
+    const expectedOutput = expectedOutputfile
       ? JSON.parse(fs.readFileSync(expectedOutputfile))
       : "";
 
@@ -227,7 +246,7 @@ async function compareOutput(
       continue;
     }
 
-    if (!isEqual(expectedOutput, apiOutput)) {
+    if (!isEqual(expectedOutput, actualOutput)) {
       core.info(
         `Test output do not match for transformation: ${transformationName}`
       );
@@ -237,7 +256,7 @@ async function compareOutput(
 
       fs.writeFileSync(
         `${testOutputDir}/${transformationHandleName}_diff.json`,
-        JSON.stringify(detailedDiff(expectedOutput, apiOutput), null, 2)
+        JSON.stringify(detailedDiff(expectedOutput, actualOutput), null, 2)
       );
 
       testOutputFiles.push(
@@ -249,14 +268,21 @@ async function compareOutput(
 
 // Upload the test results to an artifact store.
 async function uploadTestArtifacts(testOutputFiles) {
+  core.info(`Uploading test artifacts`);
   // upload artifact
   if (uploadTestArtifact) {
     core.info("Uploading test api output");
-    await artifactClient.uploadArtifact(
+    const artifactClientResponse = await artifactClient.uploadArtifact(
       "transformer-test-results",
       testOutputFiles,
       "."
     );
+
+    if (artifactClientResponse.failedItems.length > 0) {
+      throw new Error(
+        `Artifacts upload failed, failedItem: ${JSON.stringify(failedItems)}`
+      );
+    }
   }
 }
 
@@ -266,6 +292,7 @@ async function publishTransformation(
   librariesTest,
   commitId
 ) {
+  core.info(`Publishing transformations and libraries`);
   // publish
   res = await publish(transformationTest, librariesTest, commitId);
   core.info(`Publish result: ${JSON.stringify(res.data)}`);
@@ -287,11 +314,9 @@ function colorize(message, color) {
 }
 
 // Log failed tests
-function logFailedTests(failedTests) {
-  core.info(colorize("\nFailed Tests:", "yellow"));
-  for (let i = 0; i < failedTests.length; i++) {
-    const test = failedTests[i];
-
+function logFailedTests(tests) {
+  core.info(colorize("\nFailed Tests:\n", "yellow"));
+  for (const test of tests) {
     core.info(colorize(`   ID: ${test.id}`, "red"));
     core.info(colorize(`   Name: ${test.name}`, "red"));
     core.info(colorize(`   Error: ${JSON.stringify(test.result)}\n`, "red"));
@@ -300,31 +325,32 @@ function logFailedTests(failedTests) {
 }
 
 async function testAndPublish() {
-  const transformationDict = {};
-  const libraryDict = {};
   const outputMismatchResults = [];
   const testOutputFiles = [];
 
   try {
     core.info("Initializing...");
-    const transformations = [];
-    let libraries = [];
-    getTransformationsAndLibrariesFromLocal(transformations, libraries);
-    await init();
+    // const transformations = [], libraries = [];
+    const { transformations, libraries } =
+      getTransformationsAndLibrariesFromLocal();
+    const { all_transformations, all_libraries } =
+      await loadTransformationsAndLibraries();
+
+    const transformationNameToId = buildNameToIdMap(all_transformations, "tr");
+    const libraryNameToId = buildNameToIdMap(all_libraries, "lib");
 
     core.info("List of transformations and libraries successfully fetched");
 
-    await upsertTransformations(transformations, transformationDict);
-    await upsertLibraries(libraries, libraryDict);
+    const transformationDict = await upsertTransformations(
+      transformations,
+      transformationNameToId
+    );
 
-    const transformationTest = [];
-    const librariesTest = [];
+    const libraryDict = await upsertLibraries(libraries, libraryNameToId);
 
-    await buildTestSuite(
+    const { transformationTest, librariesTest } = await buildTestSuite(
       transformationDict,
-      transformationTest,
-      libraryDict,
-      librariesTest
+      libraryDict
     );
 
     const testSuiteResult = (
@@ -337,7 +363,7 @@ async function testAndPublish() {
       testOutputFiles
     );
 
-    uploadTestArtifacts(testOutputFiles);
+    await uploadTestArtifacts(testOutputFiles);
 
     if (outputMismatchResults.length > 0) {
       throw new Error(outputMismatchResults.join(", "));
@@ -345,7 +371,7 @@ async function testAndPublish() {
 
     core.info("Test Passed!!!");
     if (!testOnly) {
-      publishTransformation(transformationTest, librariesTest, commitId);
+      await publishTransformation(transformationTest, librariesTest, commitId);
     }
   } catch (err) {
     core.setFailed(err.message);
