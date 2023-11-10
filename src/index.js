@@ -328,53 +328,49 @@ async function testAndPublish() {
   const outputMismatchResults = [];
   const testOutputFiles = [];
 
-  try {
-    core.info("Initializing...");
-    // const transformations = [], libraries = [];
-    const { transformations, libraries } =
-      getTransformationsAndLibrariesFromLocal();
-    const { all_transformations, all_libraries } =
-      await loadTransformationsAndLibraries();
+  core.info("Initializing...");
+  // const transformations = [], libraries = [];
+  const { transformations, libraries } =
+    getTransformationsAndLibrariesFromLocal();
+  const { all_transformations, all_libraries } =
+    await loadTransformationsAndLibraries();
 
-    const transformationNameToId = buildNameToIdMap(all_transformations, "tr");
-    const libraryNameToId = buildNameToIdMap(all_libraries, "lib");
+  const transformationNameToId = buildNameToIdMap(all_transformations, "tr");
+  const libraryNameToId = buildNameToIdMap(all_libraries, "lib");
 
-    core.info("List of transformations and libraries successfully fetched");
+  core.info("List of transformations and libraries successfully fetched");
 
-    const transformationDict = await upsertTransformations(
-      transformations,
-      transformationNameToId
-    );
+  const transformationDict = await upsertTransformations(
+    transformations,
+    transformationNameToId
+  );
 
-    const libraryDict = await upsertLibraries(libraries, libraryNameToId);
+  const libraryDict = await upsertLibraries(libraries, libraryNameToId);
 
-    const { transformationTest, librariesTest } = await buildTestSuite(
-      transformationDict,
-      libraryDict
-    );
+  const { transformationTest, librariesTest } = await buildTestSuite(
+    transformationDict,
+    libraryDict
+  );
 
-    const testSuiteResult = (
-      await runTestSuite(transformationTest, librariesTest)
-    ).data.result;
+  const testSuiteResult = (
+    await runTestSuite(transformationTest, librariesTest)
+  ).data.result;
 
-    await compareOutput(
-      testSuiteResult.successTestResults,
-      transformationDict,
-      testOutputFiles
-    );
+  await compareOutput(
+    testSuiteResult.successTestResults,
+    transformationDict,
+    testOutputFiles
+  );
 
-    await uploadTestArtifacts(testOutputFiles);
+  await uploadTestArtifacts(testOutputFiles);
 
-    if (outputMismatchResults.length > 0) {
-      throw new Error(outputMismatchResults.join(", "));
-    }
+  if (outputMismatchResults.length > 0) {
+    throw new Error(outputMismatchResults.join(", "));
+  }
 
-    core.info("Test Passed!!!");
-    if (!testOnly) {
-      await publishTransformation(transformationTest, librariesTest, commitId);
-    }
-  } catch (err) {
-    core.setFailed(err.message);
+  core.info("Test Passed!!!");
+  if (!testOnly) {
+    await publishTransformation(transformationTest, librariesTest, commitId);
   }
 }
 
