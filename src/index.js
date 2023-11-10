@@ -43,47 +43,35 @@ function getTransformationsAndLibrariesFromLocal() {
   return { transformations, libraries };
 }
 
-// Build a map of object names to their respective IDs (e.g., transformation name to ID).
-function buildNameToIdMap(objectArr, type) {
-  const transformationNameToId = {};
-  const libraryNameToId = {};
-
-  core.info(`Building name to id map`);
-  if (type == "tr") {
-    objectArr.map((tr) => {
-      transformationNameToId[tr.name] = tr.id;
-    });
-    return transformationNameToId;
-  } else {
-    objectArr.map((lib) => {
-      libraryNameToId[lib.name] = lib.id;
-    });
-    return libraryNameToId;
-  }
+function buildNameToIdMap(arr) {
+  return arr.reduce((map, entry) => {
+    map[entry.name] = entry.id;
+    return map;
+  }, {});
 }
 
 // Fetch transformation and libraries.
 async function loadTransformationsAndLibraries() {
-  let all_transformations = [];
-  let all_libraries = [];
+  let fetchExistingTransformations = [];
+  let fetchExistingLibraries = [];
 
   const transformationsResponse = await getAllTransformations();
-  all_transformations = transformationsResponse.data
+  fetchExistingTransformations = transformationsResponse.data
     ? JSON.parse(JSON.stringify(transformationsResponse.data.transformations))
     : [];
 
   const librariesResponse = await getAllLibraries();
-  all_libraries = librariesResponse.data
+  fetchExistingLibraries = librariesResponse.data
     ? JSON.parse(JSON.stringify(librariesResponse.data.libraries))
     : [];
 
-  return { all_transformations, all_libraries };
+  return { fetchExistingTransformations, fetchExistingLibraries };
 }
 
 // Create or update transformations
 async function upsertTransformations(transformations, transformationNameToId) {
-  const transformationDict = {};
   core.info(`Upserting transformations`);
+  const transformationDict = {};
 
   for (const tr of transformations) {
     const code = fs.readFileSync(tr.file, "utf-8");
@@ -115,20 +103,20 @@ async function upsertTransformations(transformations, transformationNameToId) {
 
 // Create or update a library.
 async function upsertLibraries(libraries, libraryNameToId) {
-  const libraryDict = {};
   core.info(`Upserting libraries`);
+  const libraryDict = {};
   for (const lib of libraries) {
     const code = fs.readFileSync(lib.file, "utf-8");
     let res;
     if (libraryNameToId[lib.name]) {
       // update library and get a new versionId
       const id = libraryNameToId[lib.name];
-      res = await updateLibrary(id, lib.description, code, lib.language);
       core.info(`Updated library: ${lib.name}`);
+      res = await updateLibrary(id, lib.description, code, lib.language);
     } else {
       // create a new library
-      res = await createLibrary(lib.name, lib.description, code, lib.language);
       core.info(`Created library: ${lib.name}`);
+      res = await createLibrary(lib.name, lib.description, code, lib.language);
     }
     libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
   }
@@ -137,9 +125,9 @@ async function upsertLibraries(libraries, libraryNameToId) {
 
 // Build the test suite.
 async function buildTestSuite(transformationDict, libraryDict) {
+  core.info("Building test suite");
   const transformationTest = [],
     librariesTest = [];
-  core.info("Building test suite");
 
   for (const trVersionId of Object.keys(transformationDict)) {
     const testInputPath =
@@ -201,7 +189,7 @@ async function runTestSuite(transformationTest, librariesTest) {
   return res;
 }
 
-// Compare the API output with the expected output.
+// Compare the API output with the actual output.
 async function compareOutput(
   successResults,
   transformationDict,
@@ -329,14 +317,14 @@ async function testAndPublish() {
   const testOutputFiles = [];
 
   core.info("Initializing...");
-  // const transformations = [], libraries = [];
+
   const { transformations, libraries } =
     getTransformationsAndLibrariesFromLocal();
-  const { all_transformations, all_libraries } =
+  const { fetchExistingTransformations, fetchExistingLibraries } =
     await loadTransformationsAndLibraries();
 
-  const transformationNameToId = buildNameToIdMap(all_transformations, "tr");
-  const libraryNameToId = buildNameToIdMap(all_libraries, "lib");
+  const transformationNameToId = buildNameToIdMap(fetchExistingTransformations);
+  const libraryNameToId = buildNameToIdMap(fetchExistingLibraries);
 
   core.info("List of transformations and libraries successfully fetched");
 
