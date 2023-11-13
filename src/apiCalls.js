@@ -15,6 +15,9 @@ async function getAllTransformations() {
       username: core.getInput("email"),
       password: core.getInput("accessToken"),
     },
+    headers: {
+      "user-agent": "transformationAction",
+    },
   });
 }
 
@@ -24,10 +27,14 @@ async function getAllLibraries() {
       username: core.getInput("email"),
       password: core.getInput("accessToken"),
     },
+    headers: {
+      "user-agent": "transformationAction",
+    },
   });
 }
 
-async function createTransformer(name, description, code, language) {
+async function createTransformation(name, description, code, language) {
+  core.info(`Created transformation: ${name}`);
   return axios.default.post(
     `${createTransformerEndpoint}?publish=false`,
     {
@@ -41,11 +48,15 @@ async function createTransformer(name, description, code, language) {
         username: core.getInput("email"),
         password: core.getInput("accessToken"),
       },
+      headers: {
+        "user-agent": "transformationAction",
+      },
     }
   );
 }
 
-async function updateTransformer(id, description, code, language) {
+async function updateTransformation(id, name, description, code, language) {
+  core.info(`Updated transformation: ${name}`);
   return axios.default.post(
     `${createTransformerEndpoint}/${id}?publish=false`,
     {
@@ -57,6 +68,9 @@ async function updateTransformer(id, description, code, language) {
       auth: {
         username: core.getInput("email"),
         password: core.getInput("accessToken"),
+      },
+      headers: {
+        "user-agent": "transformationAction",
       },
     }
   );
@@ -76,6 +90,9 @@ async function createLibrary(name, description, code, language) {
         username: core.getInput("email"),
         password: core.getInput("accessToken"),
       },
+      headers: {
+        "user-agent": "transformationAction",
+      },
     }
   );
 }
@@ -93,6 +110,9 @@ async function updateLibrary(id, description, code, language) {
         username: core.getInput("email"),
         password: core.getInput("accessToken"),
       },
+      headers: {
+        "user-agent": "transformationAction",
+      },
     }
   );
 }
@@ -108,6 +128,9 @@ async function testTransformationAndLibrary(transformations, libraries) {
       auth: {
         username: core.getInput("email"),
         password: core.getInput("accessToken"),
+      },
+      headers: {
+        "user-agent": "transformationAction",
       },
     }
   );
@@ -126,6 +149,9 @@ async function publish(transformations, libraries, commitId) {
         username: core.getInput("email"),
         password: core.getInput("accessToken"),
       },
+      headers: {
+        "user-agent": "transformationAction",
+      },
     }
   );
 }
@@ -133,9 +159,9 @@ async function publish(transformations, libraries, commitId) {
 module.exports = {
   getAllTransformations,
   getAllLibraries,
-  createTransformer,
+  createTransformation,
   createLibrary,
-  updateTransformer,
+  updateTransformation,
   updateLibrary,
   testTransformationAndLibrary,
   publish,
