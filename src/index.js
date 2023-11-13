@@ -26,12 +26,11 @@ const commitId = process.env.GITHUB_SHA || "";
 
 // Load transformations and libraries from a local meta file.
 function getTransformationsAndLibrariesFromLocal() {
-  const transformations = [],
-    libraries = [];
-
   core.info(
     `Loading transformations and libraries from the meta file: ${metaFilePath}`
   );
+  const transformations = [];
+  const libraries = [];
 
   let meta = JSON.parse(fs.readFileSync(metaFilePath, "utf-8"));
   if (meta.transformations) {
@@ -52,20 +51,20 @@ function buildNameToIdMap(arr) {
 
 // Fetch transformation and libraries.
 async function loadTransformationsAndLibraries() {
-  let fetchExistingTransformations = [];
-  let fetchExistingLibraries = [];
+  let workspaceTransformations = [];
+  let workspaceLibraries = [];
 
   const transformationsResponse = await getAllTransformations();
-  fetchExistingTransformations = transformationsResponse.data
+  workspaceTransformations = transformationsResponse.data
     ? JSON.parse(JSON.stringify(transformationsResponse.data.transformations))
     : [];
 
   const librariesResponse = await getAllLibraries();
-  fetchExistingLibraries = librariesResponse.data
+  workspaceLibraries = librariesResponse.data
     ? JSON.parse(JSON.stringify(librariesResponse.data.libraries))
     : [];
 
-  return { fetchExistingTransformations, fetchExistingLibraries };
+  return { workspaceTransformations, workspaceLibraries };
 }
 
 // Create or update transformations
@@ -78,6 +77,7 @@ async function upsertTransformations(transformations, transformationNameToId) {
     let res;
     if (transformationNameToId[tr.name]) {
       // update existing transformer and get a new versionId
+      core.info(`Updating transformation: ${tr.name}`);
       const id = transformationNameToId[tr.name];
       res = await updateTransformation(
         id,
@@ -87,6 +87,7 @@ async function upsertTransformations(transformations, transformationNameToId) {
         tr.language
       );
     } else {
+      core.info(`Creating transformation: ${tr.name}`);
       // create new transformer
       res = await createTransformation(
         tr.name,
@@ -110,12 +111,12 @@ async function upsertLibraries(libraries, libraryNameToId) {
     let res;
     if (libraryNameToId[lib.name]) {
       // update library and get a new versionId
+      core.info(`Updating library: ${lib.name}`);
       const id = libraryNameToId[lib.name];
-      core.info(`Updated library: ${lib.name}`);
       res = await updateLibrary(id, lib.description, code, lib.language);
     } else {
       // create a new library
-      core.info(`Created library: ${lib.name}`);
+      core.info(`Creating library: ${lib.name}`);
       res = await createLibrary(lib.name, lib.description, code, lib.language);
     }
     libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
@@ -190,17 +191,18 @@ async function runTestSuite(transformationTest, librariesTest) {
 }
 
 // Compare the API output with the actual output.
-async function compareOutput(
-  successResults,
-  transformationDict,
-  testOutputFiles
-) {
-  core.info("Comparing api output with expected output");
-
+async function compareOutput(successResults, transformationDict) {
+  core.info("Comparing actual output with expected output");
+  const outputMismatchResults = [];
+  const testOutputFiles = [];
   for (const successResult of successResults) {
     const transformerVersionID = successResult.transformerVersionID;
 
+    if (!fs.existsSync(testOutputDir)) {
+      fs.mkdirSync(testOutputDir);
+    }
     if (!transformationDict.hasOwnProperty(transformerVersionID)) {
+      core.info(`Transformer version id not found.`);
       continue;
     }
 
@@ -252,6 +254,7 @@ async function compareOutput(
       );
     }
   }
+  return { outputMismatchResults, testOutputFiles };
 }
 
 // Upload the test results to an artifact store.
@@ -313,18 +316,15 @@ function logFailedTests(tests) {
 }
 
 async function testAndPublish() {
-  const outputMismatchResults = [];
-  const testOutputFiles = [];
-
-  core.info("Initializing...");
+  core.info("Initializing");
 
   const { transformations, libraries } =
     getTransformationsAndLibrariesFromLocal();
-  const { fetchExistingTransformations, fetchExistingLibraries } =
+  const { workspaceTransformations, workspaceLibraries } =
     await loadTransformationsAndLibraries();
 
-  const transformationNameToId = buildNameToIdMap(fetchExistingTransformations);
-  const libraryNameToId = buildNameToIdMap(fetchExistingLibraries);
+  const transformationNameToId = buildNameToIdMap(workspaceTransformations);
+  const libraryNameToId = buildNameToIdMap(workspaceLibraries);
 
   core.info("List of transformations and libraries successfully fetched");
 
@@ -344,10 +344,9 @@ async function testAndPublish() {
     await runTestSuite(transformationTest, librariesTest)
   ).data.result;
 
-  await compareOutput(
+  const { outputMismatchResults, testOutputFiles } = await compareOutput(
     testSuiteResult.successTestResults,
-    transformationDict,
-    testOutputFiles
+    transformationDict
   );
 
   await uploadTestArtifacts(testOutputFiles);
