@@ -9,6 +9,10 @@ const publishEndpoint = `${serverEndpoint}/transformations/libraries/publish`;
 const listTransformationsEndpoint = `${serverEndpoint}/transformations`;
 const listLibrariesEndpoint = `${serverEndpoint}/libraries`;
 
+const defaultHeader = {
+  "user-agent": "transformationAction"
+}
+
 async function getAllTransformations() {
   return axios.default.get(listTransformationsEndpoint, {
     auth: {
@@ -16,7 +20,7 @@ async function getAllTransformations() {
       password: core.getInput("accessToken"),
     },
     headers: {
-      "user-agent": "transformationAction",
+      ...defaultHeader
     },
   });
 }
@@ -28,7 +32,7 @@ async function getAllLibraries() {
       password: core.getInput("accessToken"),
     },
     headers: {
-      "user-agent": "transformationAction",
+      ...defaultHeader
     },
   });
 }
@@ -49,7 +53,7 @@ async function createTransformation(name, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        "user-agent": "transformationAction",
+        ...defaultHeader
       },
     }
   );
@@ -70,7 +74,7 @@ async function updateTransformation(id, name, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        "user-agent": "transformationAction",
+        ...defaultHeader
       },
     }
   );
@@ -91,7 +95,7 @@ async function createLibrary(name, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        "user-agent": "transformationAction",
+        ...defaultHeader
       },
     }
   );
@@ -111,7 +115,7 @@ async function updateLibrary(id, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        "user-agent": "transformationAction",
+        ...defaultHeader
       },
     }
   );
@@ -130,7 +134,7 @@ async function testTransformationAndLibrary(transformations, libraries) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        "user-agent": "transformationAction",
+        ...defaultHeader
       },
     }
   );
@@ -150,7 +154,7 @@ async function publish(transformations, libraries, commitId) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        "user-agent": "transformationAction",
+        ...defaultHeader
       },
     }
   );

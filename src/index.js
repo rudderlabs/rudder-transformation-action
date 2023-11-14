@@ -18,7 +18,7 @@ const {
 
 const testOutputDir = "./test-outputs";
 const uploadTestArtifact =
-  Boolean(core.getInput("uploadTestArtifact")) || false;
+  core.getInput("uploadTestArtifact").toLowerCase() == "true";
 const metaFilePath = core.getInput("metaPath");
 
 const testOnly = process.env.TEST_ONLY !== "false";
@@ -169,19 +169,9 @@ async function runTestSuite(transformationTest, librariesTest) {
     librariesTest
   );
 
-  core.info(
-    colorize(
-      `\nTotal tests ${
-        res.data.result.successTestResults.length +
-        res.data.result.failedTestResults.length
-      }, ${res.data.result.successTestResults.length} passed and ${
-        res.data.result.failedTestResults.length
-      } failed\n`,
-      "yellow"
-    )
-  );
+  logResult(res.data.result);
+
   if (res.data.result.failedTestResults.length > 0) {
-    logFailedTests(res.data.result.failedTestResults);
     throw new Error(
       "Failures occured while running tests against input events"
     );
@@ -202,7 +192,9 @@ async function compareOutput(successResults, transformationDict) {
       fs.mkdirSync(testOutputDir);
     }
     if (!transformationDict.hasOwnProperty(transformerVersionID)) {
-      core.info(`Transformer version id not found.`);
+      core.warn(
+        `Transformer with version id: ${transformerVersionID} not found.`
+      );
       continue;
     }
 
@@ -261,19 +253,18 @@ async function compareOutput(successResults, transformationDict) {
 async function uploadTestArtifacts(testOutputFiles) {
   core.info(`Uploading test artifacts`);
   // upload artifact
-  if (uploadTestArtifact) {
-    core.info("Uploading test api output");
-    const artifactClientResponse = await artifactClient.uploadArtifact(
-      "transformer-test-results",
-      testOutputFiles,
-      "."
-    );
 
-    if (artifactClientResponse.failedItems.length > 0) {
-      throw new Error(
-        `Artifacts upload failed, failedItem: ${JSON.stringify(failedItems)}`
-      );
-    }
+  core.info("Uploading test api output");
+  const artifactClientResponse = await artifactClient.uploadArtifact(
+    "transformer-test-results",
+    testOutputFiles,
+    "."
+  );
+
+  if (artifactClientResponse.failedItems.length > 0) {
+    throw new Error(
+      `Artifacts upload failed, items: ${JSON.stringify(failedItems)}`
+    );
   }
 }
 
@@ -286,7 +277,6 @@ async function publishTransformation(
   core.info(`Publishing transformations and libraries`);
   // publish
   res = await publish(transformationTest, librariesTest, commitId);
-  core.info(`Publish result: ${JSON.stringify(res.data)}`);
 }
 
 function colorize(message, color) {
@@ -305,13 +295,25 @@ function colorize(message, color) {
 }
 
 // Log failed tests
-function logFailedTests(tests) {
-  core.info(colorize("\nFailed Tests:\n", "yellow"));
-  for (const test of tests) {
-    core.info(colorize(`   ID: ${test.id}`, "red"));
-    core.info(colorize(`   Name: ${test.name}`, "red"));
-    core.info(colorize(`   Error: ${JSON.stringify(test.result)}\n`, "red"));
-    core.info("\n" + "=".repeat(40) + "\n"); // Add a line of equal signs between logs
+function logResult(result) {
+  core.info(
+    colorize(
+      `\nTotal tests ${
+        result.successTestResults.length + result.failedTestResults.length
+      }, ${result.successTestResults.length} passed and ${
+        result.failedTestResults.length
+      } failed\n`,
+      "yellow"
+    )
+  );
+  if (result.failedTestResults.length > 0) {
+    core.info(colorize("\nFailed Tests:\n", "yellow"));
+    for (const test of result.failedTestResults) {
+      core.info(colorize(`   ID: ${test.id}`, "red"));
+      core.info(colorize(`   Name: ${test.name}`, "red"));
+      core.info(colorize(`   Error: ${JSON.stringify(test.result)}\n`, "red"));
+      core.info("\n" + "=".repeat(40) + "\n"); // Add a line of equal signs between logs
+    }
   }
 }
 
@@ -349,7 +351,9 @@ async function testAndPublish() {
     transformationDict
   );
 
-  await uploadTestArtifacts(testOutputFiles);
+  if (uploadTestArtifact) {
+    await uploadTestArtifacts(testOutputFiles);
+  }
 
   if (outputMismatchResults.length > 0) {
     throw new Error(outputMismatchResults.join(", "));
