@@ -25,14 +25,14 @@ const testOnly = process.env.TEST_ONLY !== "false";
 const commitId = process.env.GITHUB_SHA || "";
 
 // Load transformations and libraries from a local meta file.
-function getTransformationsAndLibrariesFromLocal() {
+function getTransformationsAndLibrariesFromLocal(filePath = metaFilePath) {
   core.info(
-    `Loading transformations and libraries from the meta file: ${metaFilePath}`
+    `Loading transformations and libraries from the meta file: ${filePath}`
   );
   const transformations = [];
   const libraries = [];
 
-  let meta = JSON.parse(fs.readFileSync(metaFilePath, "utf-8"));
+  let meta = JSON.parse(fs.readFileSync(filePath, "utf-8"));
   if (meta.transformations) {
     transformations.push(...meta.transformations);
   }
@@ -366,4 +366,10 @@ async function testAndPublish() {
 }
 
 // Start the testing and publishing process.
-testAndPublish();
+// testAndPublish();
+
+module.exports = {
+  getTransformationsAndLibrariesFromLocal,
+  buildNameToIdMap,
+  loadTransformationsAndLibraries,
+};
