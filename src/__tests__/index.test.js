@@ -7,6 +7,27 @@ const {
   upsertLibraries,
 } = require("../index");
 
+const {
+  getAllTransformations,
+  getAllLibraries,
+  createTransformation,
+  createLibrary,
+  updateTransformation,
+  updateLibrary,
+  testTransformationAndLibrary,
+  publish,
+} = require("../apiCalls");
+
+jest.mock("../apiCalls", () => ({
+  getAllTransformations: jest.fn(),
+  getAllLibraries: jest.fn(),
+}));
+
+// Clear mocks before each test case
+beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
 describe("getTransformationsAndLibrariesFromLocal", () => {
   // metalFilePath address
   const metaFilePath = "./src/code/meta.json";
@@ -166,6 +187,134 @@ describe("loadTransformationsAndLibraries", () => {
 
 });
 
+describe("loadTransformationsAndLibraries", () => {
+  it("should load transformations and libraries successfully", async () => {
+    // Arrange
+    const mockTransformations = [
+      {
+        id: "2Y7OF2RiChcOK8RCBglE9w3J1ZO",
+        versionId: "2Y7OaSqpk6qTZDFYu6iNP01lH4x",
+        name: "Transformation1",
+        description: "Description 1",
+        code:
+          "export function transformEvent(event, metadata) {\n" +
+          "  // log(event.a.b);\n" +
+          "  return event;\n" +
+          "}\n",
+        codeVersion: "1",
+        language: "javascript",
+        createdAt: "2023-11-13T10:57:23.431Z",
+        updatedAt: "2023-11-13T11:00:14.781Z",
+        destinations: [],
+      },
+    ];
+
+    const mockLibraries = [
+      {
+        id: "2Y7OU4R2m34rPrYUQ9Blam0uj35",
+        versionId: "2Y7OadXp1HbnqznZUQomGvVCyzF",
+        name: "New Library",
+        description: "javascript library to get finance data",
+        code:
+          "export function getPrice(finance) {\n" +
+          "    return Number(finance.price || 0);\n" +
+          "  }\n" +
+          "  export function getRevenue(finance) {\n" +
+          "    return Number(finance.revenue || 0);\n" +
+          "  }\n" +
+          "  export function getProfit(finance) {\n" +
+          "    return getPrice(finance) - getRevenue(finance);\n" +
+          "  }",
+        language: "javascript",
+        createdAt: "2023-11-13T10:59:23.582Z",
+        updatedAt: "2023-11-13T11:00:15.830Z",
+        importName: "newLibrary",
+      },
+    ];
+
+    getAllTransformations.mockResolvedValue({
+      data: { transformations: mockTransformations },
+    });
+
+    getAllLibraries.mockResolvedValue({ data: { libraries: mockLibraries } });
+
+    // Act
+    const result = await loadTransformationsAndLibraries();
+
+    // Assert
+    expect(result.workspaceTransformations).toEqual(mockTransformations);
+    expect(result.workspaceLibraries).toEqual(mockLibraries);
+  });
+
+  it("should handle API call failure for transformations", async () => {
+    const mockLibraries = [
+      {
+        id: "2Y7OU4R2m34rPrYUQ9Blam0uj35",
+        versionId: "2Y7OadXp1HbnqznZUQomGvVCyzF",
+        name: "New Library",
+        description: "javascript library to get finance data",
+        code:
+          "export function getPrice(finance) {\n" +
+          "    return Number(finance.price || 0);\n" +
+          "  }\n" +
+          "  export function getRevenue(finance) {\n" +
+          "    return Number(finance.revenue || 0);\n" +
+          "  }\n" +
+          "  export function getProfit(finance) {\n" +
+          "    return getPrice(finance) - getRevenue(finance);\n" +
+          "  }",
+        language: "javascript",
+        createdAt: "2023-11-13T10:59:23.582Z",
+        updatedAt: "2023-11-13T11:00:15.830Z",
+        importName: "newLibrary",
+      },
+    ];
+
+    getAllLibraries.mockResolvedValue({ data: { libraries: mockLibraries } });
+    // Arrange
+    getAllTransformations.mockRejectedValue(
+      new Error("Transformations API error")
+    );
+
+    // Act and Assert
+    await expect(loadTransformationsAndLibraries()).rejects.toThrow(
+      "Transformations API error"
+    );
+  });
+
+  it("should handle API call failure for libraries", async () => {
+    const mockTransformations = [
+      {
+        id: "2Y7OF2RiChcOK8RCBglE9w3J1ZO",
+        versionId: "2Y7OaSqpk6qTZDFYu6iNP01lH4x",
+        name: "Transformation1",
+        description: "Description 1",
+        code:
+          "export function transformEvent(event, metadata) {\n" +
+          "  // log(event.a.b);\n" +
+          "  return event;\n" +
+          "}\n",
+        codeVersion: "1",
+        language: "javascript",
+        createdAt: "2023-11-13T10:57:23.431Z",
+        updatedAt: "2023-11-13T11:00:14.781Z",
+        destinations: [],
+      },
+    ];
+
+    getAllTransformations.mockResolvedValue({
+      data: { transformations: mockTransformations },
+    });
+    // Arrange
+    getAllLibraries.mockRejectedValue(new Error("Libraries API error"));
+
+    // Act and Assert
+    await expect(loadTransformationsAndLibraries()).rejects.toThrow(
+      "Libraries API error"
+    );
+  });
+});
+
 describe("upsertTransformations", () => {
     it("should update existing transformations", async () => {
       // Arrange
@@ -234,3 +383,4 @@ describe("upsertLibraries", () => {
     );
   });
 });
+
