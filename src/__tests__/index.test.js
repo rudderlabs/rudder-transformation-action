@@ -4,6 +4,7 @@ const {
   buildNameToIdMap,
   loadTransformationsAndLibraries,
   upsertTransformations,
+  upsertLibraries,
 } = require("../index");
 
 describe("getTransformationsAndLibrariesFromLocal", () => {
@@ -166,37 +167,70 @@ describe("loadTransformationsAndLibraries", () => {
 });
 
 describe("upsertTransformations", () => {
-  it("should update existing transformations", async () => {
+    it("should update existing transformations", async () => {
+      // Arrange
+      const transformations = [
+        {
+          name: "Transformation1",
+          description: "Description 5",
+          file: "./src/code/code.js",
+          language: "javascript",
+        },
+      ];
+  
+      const transformationNameToId = {
+        Transformation1: "2Y7OF2RiChcOK8RCBglE9w3J1ZO", // Assuming this id exists for the update case
+      };
+  
+      // Act
+      const result = await upsertTransformations(
+        transformations,
+        transformationNameToId
+      );
+  
+      // Assert
+      const versionId = Object.keys(result)[0]; // Assuming there's only one entry in the result
+      expect(result[versionId]).toEqual(
+        expect.objectContaining({
+          name: "Transformation1",
+          description: "Description 5",
+          file: "./src/code/code.js",
+          language: "javascript",
+          id: "2Y7OF2RiChcOK8RCBglE9w3J1ZO",
+        })
+      );
+    });
+  });
+  
+
+describe("upsertLibraries", () => {
+  it("should update existing libraries", async () => {
     // Arrange
-    const transformations = [
+    const libraries = [
       {
-        name: "existingTransform",
-        description: "Description 5",
-        file: "./src/code/meta.json",
+        name: "New Library",
+        description: "Description 1",
+        file: "./src/code/lib1.js",
         language: "javascript",
       },
     ];
 
-    const transformationNameToId = {
-      existingTransform: 1, // Assuming this id exists for the update case
+    const libraryNameToId = {
+      "New Library": "2Y7OU4R2m34rPrYUQ9Blam0uj35", // Assuming this id exists for the update case
     };
 
     // Act
-    const result = await upsertTransformations(
-      transformations,
-      transformationNameToId
-    );
+    const result = await upsertLibraries(libraries, libraryNameToId);
 
-    console.log(JSON.stringify(result));
-    // Assert
-    expect(result).toEqual({
-      newVersionId: {
-        name: "existingTransform",
+    console.log(result);
+    const versionId = Object.keys(result)[0]; // Assuming there's only one entry in the result
+    expect(result[versionId]).toEqual(
+      expect.objectContaining({
+        name: "New Library",
         description: "Description 1",
-        file: "/path/to/file1",
+        file: "./src/code/lib1.js",
         language: "javascript",
-        id: 1,
-      },
-    });
+      })
+    );
   });
 });
