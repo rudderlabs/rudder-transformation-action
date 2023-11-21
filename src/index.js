@@ -372,4 +372,5 @@ module.exports = {
   getTransformationsAndLibrariesFromLocal,
   buildNameToIdMap,
   loadTransformationsAndLibraries,
+  upsertTransformations,
 };

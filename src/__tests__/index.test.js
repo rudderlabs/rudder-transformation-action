@@ -3,6 +3,7 @@ const {
   getTransformationsAndLibrariesFromLocal,
   buildNameToIdMap,
   loadTransformationsAndLibraries,
+  upsertTransformations,
 } = require("../index");
 
 describe("getTransformationsAndLibrariesFromLocal", () => {
@@ -162,4 +163,40 @@ describe("loadTransformationsAndLibraries", () => {
   });
 
 
+});
+
+describe("upsertTransformations", () => {
+  it("should update existing transformations", async () => {
+    // Arrange
+    const transformations = [
+      {
+        name: "existingTransform",
+        description: "Description 5",
+        file: "./src/code/meta.json",
+        language: "javascript",
+      },
+    ];
+
+    const transformationNameToId = {
+      existingTransform: 1, // Assuming this id exists for the update case
+    };
+
+    // Act
+    const result = await upsertTransformations(
+      transformations,
+      transformationNameToId
+    );
+
+    console.log(JSON.stringify(result));
+    // Assert
+    expect(result).toEqual({
+      newVersionId: {
+        name: "existingTransform",
+        description: "Description 1",
+        file: "/path/to/file1",
+        language: "javascript",
+        id: 1,
+      },
+    });
+  });
 });
