@@ -1,4 +1,3 @@
-const fs = require("fs");
 const {
   getTransformationsAndLibrariesFromLocal,
   buildNameToIdMap,
@@ -21,12 +20,16 @@ const {
 jest.mock("../apiCalls", () => ({
   getAllTransformations: jest.fn(),
   getAllLibraries: jest.fn(),
+  updateTransformation: jest.fn(),
+  createTransformation: jest.fn(),
+  createLibrary: jest.fn(),
+  updateLibrary: jest.fn(),
 }));
 
 // Clear mocks before each test case
 beforeEach(() => {
-    jest.clearAllMocks();
-  });
+  jest.clearAllMocks();
+});
 
 describe("getTransformationsAndLibrariesFromLocal", () => {
   // metalFilePath address
@@ -183,8 +186,6 @@ describe("loadTransformationsAndLibraries", () => {
     expect(result.workspaceTransformations.length).toBeGreaterThan(0);
     expect(result.workspaceLibraries.length).toBeGreaterThan(0);
   });
-
-
 });
 
 describe("loadTransformationsAndLibraries", () => {
@@ -316,71 +317,161 @@ describe("loadTransformationsAndLibraries", () => {
 });
 
 describe("upsertTransformations", () => {
-    it("should update existing transformations", async () => {
-      // Arrange
-      const transformations = [
-        {
-          name: "Transformation1",
-          description: "Description 5",
-          file: "./src/code/code.js",
-          language: "javascript",
-        },
-      ];
-  
-      const transformationNameToId = {
-        Transformation1: "2Y7OF2RiChcOK8RCBglE9w3J1ZO", // Assuming this id exists for the update case
-      };
-  
-      // Act
-      const result = await upsertTransformations(
-        transformations,
-        transformationNameToId
-      );
-  
-      // Assert
-      const versionId = Object.keys(result)[0]; // Assuming there's only one entry in the result
-      expect(result[versionId]).toEqual(
-        expect.objectContaining({
-          name: "Transformation1",
-          description: "Description 5",
-          file: "./src/code/code.js",
-          language: "javascript",
-          id: "2Y7OF2RiChcOK8RCBglE9w3J1ZO",
-        })
-      );
-    });
+  afterEach(() => {
+    jest.resetAllMocks();
   });
-  
 
-describe("upsertLibraries", () => {
-  it("should update existing libraries", async () => {
+  it("should update existing transformations", async () => {
     // Arrange
-    const libraries = [
+    const transformations = [
       {
-        name: "New Library",
+        name: "ExistingTransformation",
         description: "Description 1",
-        file: "./src/code/lib1.js",
+        file: "./src/code/code.js",
         language: "javascript",
       },
     ];
 
-    const libraryNameToId = {
-      "New Library": "2Y7OU4R2m34rPrYUQ9Blam0uj35", // Assuming this id exists for the update case
+    const transformationNameToId = {
+      ExistingTransformation: "existingId", // Assuming this id exists for the update case
     };
 
-    // Act
-    const result = await upsertLibraries(libraries, libraryNameToId);
+    // Mock updateTransformation API call
+    updateTransformation.mockResolvedValue({
+      data: { versionId: "newVersionId", id: "existingId" },
+    });
 
-    console.log(result);
-    const versionId = Object.keys(result)[0]; // Assuming there's only one entry in the result
-    expect(result[versionId]).toEqual(
-      expect.objectContaining({
-        name: "New Library",
-        description: "Description 1",
-        file: "./src/code/lib1.js",
-        language: "javascript",
-      })
+    // Act
+    const result = await upsertTransformations(
+      transformations,
+      transformationNameToId
     );
+
+    // Assert
+    expect(result).toEqual({
+      newVersionId: {
+        name: "ExistingTransformation",
+        description: "Description 1",
+        file: "./src/code/code.js",
+        language: "javascript",
+        id: "existingId",
+      },
+    });
+  });
+
+  it("should create new transformations", async () => {
+    // Arrange
+    const transformations = [
+      {
+        name: "NewTransformation",
+        description: "Description 2",
+        file: "./src/code/code2.js",
+        language: "javascript",
+      },
+    ];
+
+    const transformationNameToId = {};
+
+    // Mock createTransformation API call
+    createTransformation.mockResolvedValue({
+      data: { versionId: "newVersionId", id: "newId" },
+    });
+
+    // Act
+    const result = await upsertTransformations(
+      transformations,
+      transformationNameToId
+    );
+
+    // Assert
+    expect(result).toEqual({
+      newVersionId: {
+        name: "NewTransformation",
+        description: "Description 2",
+        file: "./src/code/code2.js",
+        language: "javascript",
+        id: "newId",
+      },
+    });
   });
 });
 
+describe('upsertLibraries', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+  
+    it('should update existing libraries', async () => {
+      // Arrange
+      const libraries = [
+        {
+          name: "Library1",
+          description: "Description 1",
+          file: "./src/code/lib1.js",
+          language: "javascript",
+        },
+      ];
+
+      const libraryNameToId = {
+        Library1: "existingLibraryId", // Assuming this id exists for the update case
+      };
+
+      // Mock the behavior of updateLibrary
+      updateLibrary.mockResolvedValue({
+        data: {
+          versionId: "newVersionId",
+          id: "existingLibraryId",
+        },
+      });
+
+      // Act
+      const result = await upsertLibraries(libraries, libraryNameToId);
+
+      // Assert
+      expect(result).toEqual({
+        newVersionId: {
+          name: "Library1",
+          description: "Description 1",
+          file: "./src/code/lib1.js",
+          language: "javascript",
+          id: "existingLibraryId",
+        },
+      });
+    });
+  
+    it('should create new libraries', async () => {
+      // Arrange
+      const libraries = [
+        {
+          name: "NewLibrary",
+          description: "Description 2",
+          file: "./src/code/lib2.js",
+          language: "javascript",
+        },
+      ];
+
+      const libraryNameToId = {}; // Empty object indicating no existing library
+
+      // Mock the behavior of createLibrary
+      createLibrary.mockResolvedValue({
+        data: {
+          versionId: "newVersionId",
+          id: "newLibraryId",
+        },
+      });
+
+      // Act
+      const result = await upsertLibraries(libraries, libraryNameToId);
+
+      // Assert
+      expect(result).toEqual({
+        newVersionId: {
+          name: "NewLibrary",
+          description: "Description 2",
+          file: "./src/code/lib2.js",
+          language: "javascript",
+          id: "newLibraryId",
+        },
+      });
+    });
+  });
