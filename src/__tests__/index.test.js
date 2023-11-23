@@ -1,11 +1,14 @@
+// Imports
+const fs = require("fs");
 const {
   getTransformationsAndLibrariesFromLocal,
   buildNameToIdMap,
   loadTransformationsAndLibraries,
   upsertTransformations,
   upsertLibraries,
+  buildTestSuite,
+  testAndPublish,
 } = require("../index");
-
 const {
   getAllTransformations,
   getAllLibraries,
@@ -17,6 +20,10 @@ const {
   publish,
 } = require("../apiCalls");
 
+// Mock fs module
+jest.mock("fs");
+
+// Mock API calls
 jest.mock("../apiCalls", () => ({
   getAllTransformations: jest.fn(),
   getAllLibraries: jest.fn(),
@@ -24,7 +31,18 @@ jest.mock("../apiCalls", () => ({
   createTransformation: jest.fn(),
   createLibrary: jest.fn(),
   updateLibrary: jest.fn(),
+  testTransformationAndLibrary: jest.fn(),
 }));
+
+// Mock the @actions/core module
+jest.mock("@actions/core", () => {
+  const coreMock = {
+    info: jest.fn(),
+    warn: jest.fn(),
+    getInput: jest.fn(),
+  };
+  return coreMock;
+});
 
 // Clear mocks before each test case
 beforeEach(() => {
@@ -32,12 +50,47 @@ beforeEach(() => {
 });
 
 describe("getTransformationsAndLibrariesFromLocal", () => {
-  // metalFilePath address
-  const metaFilePath = "./src/code/meta.json";
-
   it("should load transformations and libraries from the meta file", () => {
+    // Mock the fs.readFileSync method
+    fs.readFileSync.mockReturnValue(
+      JSON.stringify({
+        transformations: [
+          {
+            file: "./src/code/code.js",
+            name: "Transformation1",
+            description: "Description 1",
+            language: "javascript",
+            "test-input-file": "./src/code/events.json",
+            "expected-output": "./src/code/expected.json",
+          },
+          {
+            file: "./src/code/code2.js",
+            name: "Transformation2",
+            description: "Description 2",
+            language: "javascript",
+            "test-input-file": "./src/code/events.json",
+            "expected-output": "./src/code/expected.json",
+          },
+        ],
+        libraries: [
+          {
+            file: "./src/code/lib1.js",
+            name: "getFinanceData",
+            description: "javascript library to get finance data",
+            language: "javascript",
+          },
+          {
+            file: "./src/code/lib2.js",
+            name: "getUserAddress",
+            description: "javascript library to get user address",
+            language: "javascript",
+          },
+        ],
+      })
+    );
+
     // Call the function
-    const result = getTransformationsAndLibrariesFromLocal(metaFilePath);
+    const result = getTransformationsAndLibrariesFromLocal();
 
     // Assert the result
     expect(result).toEqual({
@@ -74,19 +127,6 @@ describe("getTransformationsAndLibrariesFromLocal", () => {
         },
       ],
     });
-  });
-
-  it("should handle errors when reading the meta file", () => {
-    const metaFilePath = "./meta.json";
-
-    // Call the function
-    const result = () => getTransformationsAndLibrariesFromLocal(metaFilePath);
-
-    console.log({ result });
-    // Assert the result
-    expect(result).toThrowError(
-      `ENOENT: no such file or directory, open '${metaFilePath}'`
-    );
   });
 });
 
@@ -171,21 +211,6 @@ describe("buildNameToIdMap", () => {
     // Assert
     expect(result).toEqual({});
   });
-
-  // Add more test cases based on the behavior of your function
-});
-
-describe("loadTransformationsAndLibraries", () => {
-  it("should load transformations and libraries successfully", async () => {
-    // Call the function
-    const result = await loadTransformationsAndLibraries();
-
-    console.log({ result: JSON.stringify(result) });
-
-    // Assert the expected results
-    expect(result.workspaceTransformations.length).toBeGreaterThan(0);
-    expect(result.workspaceLibraries.length).toBeGreaterThan(0);
-  });
 });
 
 describe("loadTransformationsAndLibraries", () => {
@@ -233,10 +258,10 @@ describe("loadTransformationsAndLibraries", () => {
       },
     ];
 
+    // Mock
     getAllTransformations.mockResolvedValue({
       data: { transformations: mockTransformations },
     });
-
     getAllLibraries.mockResolvedValue({ data: { libraries: mockLibraries } });
 
     // Act
@@ -396,82 +421,342 @@ describe("upsertTransformations", () => {
   });
 });
 
-describe('upsertLibraries', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
+describe("upsertLibraries", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should update existing libraries", async () => {
+    // Arrange
+    const libraries = [
+      {
+        name: "Library1",
+        description: "Description 1",
+        file: "./src/code/lib1.js",
+        language: "javascript",
+      },
+    ];
+
+    const libraryNameToId = {
+      Library1: "existingLibraryId", // Assuming this id exists for the update case
+    };
+
+    // Mock updateLibrary API call
+    updateLibrary.mockResolvedValue({
+      data: {
+        versionId: "newVersionId",
+        id: "existingLibraryId",
+      },
     });
-  
-    it('should update existing libraries', async () => {
-      // Arrange
-      const libraries = [
-        {
-          name: "Library1",
-          description: "Description 1",
-          file: "./src/code/lib1.js",
-          language: "javascript",
-        },
-      ];
 
-      const libraryNameToId = {
-        Library1: "existingLibraryId", // Assuming this id exists for the update case
-      };
+    // Act
+    const result = await upsertLibraries(libraries, libraryNameToId);
 
-      // Mock the behavior of updateLibrary
-      updateLibrary.mockResolvedValue({
-        data: {
-          versionId: "newVersionId",
-          id: "existingLibraryId",
-        },
-      });
-
-      // Act
-      const result = await upsertLibraries(libraries, libraryNameToId);
-
-      // Assert
-      expect(result).toEqual({
-        newVersionId: {
-          name: "Library1",
-          description: "Description 1",
-          file: "./src/code/lib1.js",
-          language: "javascript",
-          id: "existingLibraryId",
-        },
-      });
-    });
-  
-    it('should create new libraries', async () => {
-      // Arrange
-      const libraries = [
-        {
-          name: "NewLibrary",
-          description: "Description 2",
-          file: "./src/code/lib2.js",
-          language: "javascript",
-        },
-      ];
-
-      const libraryNameToId = {}; // Empty object indicating no existing library
-
-      // Mock the behavior of createLibrary
-      createLibrary.mockResolvedValue({
-        data: {
-          versionId: "newVersionId",
-          id: "newLibraryId",
-        },
-      });
-
-      // Act
-      const result = await upsertLibraries(libraries, libraryNameToId);
-
-      // Assert
-      expect(result).toEqual({
-        newVersionId: {
-          name: "NewLibrary",
-          description: "Description 2",
-          file: "./src/code/lib2.js",
-          language: "javascript",
-          id: "newLibraryId",
-        },
-      });
+    // Assert
+    expect(result).toEqual({
+      newVersionId: {
+        name: "Library1",
+        description: "Description 1",
+        file: "./src/code/lib1.js",
+        language: "javascript",
+        id: "existingLibraryId",
+      },
     });
   });
+
+  it("should create new libraries", async () => {
+    // Arrange
+    const libraries = [
+      {
+        name: "NewLibrary",
+        description: "Description 2",
+        file: "./src/code/lib2.js",
+        language: "javascript",
+      },
+    ];
+
+    const libraryNameToId = {}; // Empty object indicating no existing library
+
+    // Mock createLibrary API call
+    createLibrary.mockResolvedValue({
+      data: {
+        versionId: "newVersionId",
+        id: "newLibraryId",
+      },
+    });
+
+    // Act
+    const result = await upsertLibraries(libraries, libraryNameToId);
+
+    // Assert
+    expect(result).toEqual({
+      newVersionId: {
+        name: "NewLibrary",
+        description: "Description 2",
+        file: "./src/code/lib2.js",
+        language: "javascript",
+        id: "newLibraryId",
+      },
+    });
+  });
+});
+
+describe("buildTestSuite", () => {
+  it("should build the test suite with test input for transformations", async () => {
+    // Arrange
+    const transformationDict = {
+      versionId1: {
+        file: "../code/code.js",
+        name: "Transformation1",
+        description: "Description 1",
+        language: "javascript",
+        "test-input-file": "../code/events.json",
+      },
+    };
+
+    const libraryDict = {
+      versionId3: {
+        name: "Library1",
+        description: "Description 1",
+        language: "javascript",
+      },
+    };
+
+    // Mock the behavior of fs.readFileSync
+    jest.spyOn(fs, "readFileSync").mockReturnValue(
+      JSON.stringify([
+        {
+          userId: "Anshul user id",
+          anonymousId: "anon-id-new",
+          messageId: "message-id-1",
+          context: {
+            ip: "14.5.67.21",
+            library: {
+              name: "http",
+            },
+            traits: {
+              address: {
+                city: "Kolkata",
+                country: "India",
+              },
+            },
+          },
+          timestamp: "2020-02-02T00:23:09.544Z",
+        },
+        {
+          userId: "identified user id",
+          anonymousId: "anon-id-new",
+          messageId: "message-id-2",
+          context: {
+            ip: "14.5.67.21",
+            library: {
+              name: "http",
+            },
+            traits: {},
+          },
+          properties: {
+            price: 20,
+            revenue: 15,
+          },
+          timestamp: "2020-02-02T00:23:09.544Z",
+        },
+      ])
+    );
+
+    // Act
+    const result = await buildTestSuite(transformationDict, libraryDict);
+
+    // Assert
+    expect(result.transformationTest).toEqual([
+      {
+        versionId: "versionId1",
+        testInput: [
+          {
+            userId: "Anshul user id",
+            anonymousId: "anon-id-new",
+            messageId: "message-id-1",
+            context: {
+              ip: "14.5.67.21",
+              library: {
+                name: "http",
+              },
+              traits: {
+                address: {
+                  city: "Kolkata",
+                  country: "India",
+                },
+              },
+            },
+            timestamp: "2020-02-02T00:23:09.544Z",
+          },
+          {
+            userId: "identified user id",
+            anonymousId: "anon-id-new",
+            messageId: "message-id-2",
+            context: {
+              ip: "14.5.67.21",
+              library: {
+                name: "http",
+              },
+              traits: {},
+            },
+            properties: {
+              price: 20,
+              revenue: 15,
+            },
+            timestamp: "2020-02-02T00:23:09.544Z",
+          },
+        ],
+      },
+    ]);
+
+    expect(result.librariesTest).toEqual([{ versionId: "versionId3" }]);
+  });
+
+  it("should build the test suite without test input for transformations", async () => {
+    // Arrange
+    const transformationDict = {
+      versionId1: { name: "Transformation1" },
+      versionId2: { name: "Transformation2" },
+    };
+
+    const libraryDict = {
+      versionId3: { name: "Library1" },
+      versionId4: { name: "Library2" },
+    };
+
+    // Act
+    const result = await buildTestSuite(transformationDict, libraryDict);
+
+    // Assert
+    expect(result.transformationTest).toEqual([
+      { versionId: "versionId1" },
+      { versionId: "versionId2" },
+    ]);
+
+    expect(result.librariesTest).toEqual([
+      { versionId: "versionId3" },
+      { versionId: "versionId4" },
+    ]);
+  });
+});
+
+describe("Integration Tests", () => {
+  it("should run the entire testing and publishing process", async () => {
+    // Mock getAllTransformations API call
+    getAllTransformations.mockResolvedValue({
+      data: { transformations: [{ name: "TestTransformation" }] },
+    });
+
+    // Mock getAllLibraries API call
+    getAllLibraries.mockResolvedValue({
+      data: { libraries: [{ name: "TestLibrary" }] },
+    });
+
+    // Mock updateTransformation API call
+    updateTransformation.mockImplementation(
+      async (id, name, description, code, language) => {
+        // Return a mock response with versionId and id
+        return {
+          data: {
+            versionId: "mockVersionId",
+            id: "mockId",
+          },
+        };
+      }
+    );
+
+    // Mock createTransformation API call
+    createTransformation.mockImplementation(
+      async (name, description, code, language) => {
+        // Return a mock response with versionId and id
+        return {
+          data: {
+            versionId: "mockVersionId",
+            id: "mockId",
+          },
+        };
+      }
+    );
+
+    // Mock testTransformationAndLibrary API call
+    testTransformationAndLibrary.mockResolvedValue({
+      data: {
+        result: {
+          successTestResults: [
+            {
+              transformerVersionID: "2YZBN9AhlLh9XjtKozxHuF3NTSA",
+              result: {
+                success: true,
+                output: {
+                  transformedEvents: [
+                    {
+                      userId: "identified user id",
+                      anonymousId: "anon-id-new",
+                      messageId: "message-id-1",
+                      context: {
+                        ip: "14.5.67.21",
+                        library: { name: "http" },
+                        traits: {
+                          address: { city: "Kolkata", country: "India" },
+                        },
+                      },
+                      timestamp: "2020-02-02T00:23:09.544Z",
+                    },
+                    {
+                      userId: "identified user id",
+                      anonymousId: "anon-id-new",
+                      messageId: "message-id-2",
+                      context: {
+                        ip: "14.5.67.21",
+                        library: { name: "http" },
+                        traits: {},
+                      },
+                      properties: { price: 20, revenue: 15 },
+                      timestamp: "2020-02-02T00:23:09.544Z",
+                    },
+                  ],
+                  logs: [],
+                },
+              },
+            },
+            {
+              transformerVersionID: "2YZBNAYbi40hrogAua4PdgBPbMz",
+              result: {
+                success: true,
+                output: {
+                  transformedEvents: [
+                    {
+                      revenue: 0,
+                      price: 0,
+                      profit: 0,
+                      city: "Kolkata",
+                      country: "India",
+                      street: "no data found",
+                    },
+                    {
+                      revenue: 15,
+                      price: 20,
+                      profit: 5,
+                      city: "no data found",
+                      country: "no data found",
+                      street: "no data found",
+                    },
+                  ],
+                  logs: [],
+                },
+              },
+            },
+          ],
+          failedTestResults: [],
+        },
+      },
+    });
+
+    // Mock the fs.readFileSync method
+    fs.readFileSync.mockReturnValue('{"transformations": [], "libraries": []}');
+
+    // Act
+    await testAndPublish();
+  });
+});

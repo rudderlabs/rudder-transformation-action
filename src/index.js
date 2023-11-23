@@ -18,7 +18,7 @@ const {
 
 const testOutputDir = "./test-outputs";
 const uploadTestArtifact =
-  core.getInput("uploadTestArtifact").toLowerCase() == "true";
+  core.getInput("uploadTestArtifact")?.toLowerCase() == "true";
 const metaFilePath = core.getInput("metaPath");
 
 const testOnly = process.env.TEST_ONLY !== "false";
@@ -374,4 +374,6 @@ module.exports = {
   loadTransformationsAndLibraries,
   upsertTransformations,
   upsertLibraries,
+  buildTestSuite,
+  testAndPublish
 };
