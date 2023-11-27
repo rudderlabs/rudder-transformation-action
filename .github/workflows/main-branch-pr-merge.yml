@@ -1,0 +1,38 @@
+name: Main Branch PR Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+
+permissions: read-all
+
+jobs:
+  main-branch-tests:
+    name: Run Tests on Main Branch PR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Check Current Working Directory
+        run: |
+          pwd
+        working-directory: .
+
+      - name: Set Node 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install Node.js Dependencies
+        run: npm ci
+        working-directory: .
+
+      - name: Run Tests
+        run: npm test
+        working-directory: .
