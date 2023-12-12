@@ -34,5 +34,5 @@ jobs:
         working-directory: .
 
       - name: Run Tests
-        run: npm test
+        run: TEST_SUITE=true npm test
         working-directory: .
