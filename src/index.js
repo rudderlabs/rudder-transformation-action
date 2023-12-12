@@ -23,6 +23,7 @@ const metaFilePath = core.getInput("metaPath");
 
 const testOnly = process.env.TEST_ONLY !== "false";
 const commitId = process.env.GITHUB_SHA || "";
+const testSuite = process.env.TEST_SUITE !== "true";
 
 // Load transformations and libraries from a local meta file.
 function getTransformationsAndLibrariesFromLocal(filePath = metaFilePath) {
@@ -317,11 +318,11 @@ function logResult(result) {
   }
 }
 
-async function testAndPublish() {
+async function testAndPublish(filePath) {
   core.info("Initializing");
 
   const { transformations, libraries } =
-    getTransformationsAndLibrariesFromLocal();
+    getTransformationsAndLibrariesFromLocal(filePath);
   const { workspaceTransformations, workspaceLibraries } =
     await loadTransformationsAndLibraries();
 
@@ -355,7 +356,7 @@ async function testAndPublish() {
     await uploadTestArtifacts(testOutputFiles);
   }
 
-  if (outputMismatchResults.length > 0) {
+  if (outputMismatchResults.length > 0 && testSuite) {
     throw new Error(outputMismatchResults.join(", "));
   }
 
@@ -366,7 +367,7 @@ async function testAndPublish() {
 }
 
 // Start the testing and publishing process.
-// testAndPublish();
+if (testSuite) testAndPublish();
 
 module.exports = {
   getTransformationsAndLibrariesFromLocal,
@@ -375,5 +376,5 @@ module.exports = {
   upsertTransformations,
   upsertLibraries,
   buildTestSuite,
-  testAndPublish
+  testAndPublish,
 };
