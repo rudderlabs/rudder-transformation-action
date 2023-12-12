@@ -31,7 +31,7 @@ describe("testAndPublish", () => {
     const mockTransformationsAndLibraries = {
       transformations: [
         {
-          file: "./src/code/code.js",
+          file: "./src/__tests__/code.js",
           name: "Transformation1",
           description: "Description 1",
           language: "javascript",
@@ -60,7 +60,7 @@ describe("testAndPublish", () => {
       data: {
         transformations: [
           {
-            file: "./src/code/code.js",
+            file: "./src/__tests__/code.js",
             name: "Transformation1",
             description: "Description 1",
             language: "javascript",
