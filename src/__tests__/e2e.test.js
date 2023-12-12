@@ -31,7 +31,7 @@ describe("testAndPublish", () => {
     const mockTransformationsAndLibraries = {
       transformations: [
         {
-          file: "./src/__tests__/code.js",
+          file: "./src/code/code.js",
           name: "Transformation1",
           description: "Description 1",
           language: "javascript",
@@ -60,7 +60,7 @@ describe("testAndPublish", () => {
       data: {
         transformations: [
           {
-            file: "./src/__tests__/code.js",
+            file: "./src/code/code.js",
             name: "Transformation1",
             description: "Description 1",
             language: "javascript",
@@ -167,7 +167,7 @@ describe("testAndPublish", () => {
       .mockResolvedValue(mockTestTransformationAndLibraryResponse);
     jest.spyOn(apiCalls, "publish").mockResolvedValue(mockPublishResponse);
 
-    await testAndPublish("./src/__tests__/meta.json");
+    await testAndPublish("./src/code/meta.json");
 
     if (!fs.existsSync(testOutputDir)) {
       fs.mkdirSync(testOutputDir);
