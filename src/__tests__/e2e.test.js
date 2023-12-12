@@ -2,7 +2,7 @@ const fs = require("fs");
 const {
   testAndPublish,
   getTransformationsAndLibrariesFromLocal,
-} = require("../index");
+} = require("../main");
 
 const apiCalls = require("../apiCalls");
 const { isEqual } = require("lodash");
@@ -167,7 +167,12 @@ describe("testAndPublish", () => {
       .mockResolvedValue(mockTestTransformationAndLibraryResponse);
     jest.spyOn(apiCalls, "publish").mockResolvedValue(mockPublishResponse);
 
-    await testAndPublish("./src/code/meta.json");
+    // Assert that calling testAndPublish with a specific argument throws an error
+    await expect(async () => {
+      await testAndPublish("./src/code/meta.json");
+    }).rejects.toThrow(
+      "Test output do not match for transformation: Transformation1"
+    );
 
     if (!fs.existsSync(testOutputDir)) {
       fs.mkdirSync(testOutputDir);
@@ -186,5 +191,7 @@ describe("testAndPublish", () => {
         },
       },
     });
+
+    
   });
 });

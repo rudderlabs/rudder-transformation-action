@@ -8,7 +8,7 @@ const {
   upsertLibraries,
   buildTestSuite,
   testAndPublish,
-} = require("../index");
+} = require("../main");
 const {
   getAllTransformations,
   getAllLibraries,
