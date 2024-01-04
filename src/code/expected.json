@@ -1,0 +1,18 @@
+[
+  {
+    "revenue": 0,
+    "price": 0,
+    "profit": 0,
+    "city": "Kolkata",
+    "country": "India",
+    "street": "330/8"
+  },
+  {
+    "revenue": 15,
+    "price": 20,
+    "profit": 5,
+    "city": "no data found",
+    "country": "no data found",
+    "street": "no data found"
+  }
+]
