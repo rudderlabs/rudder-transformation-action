@@ -14,11 +14,11 @@ with:
     uploadTestArtifact: true
 ```
 
-> Note: The action does the work of testing a transformation for a given set of events, it's creation and updation along with any custom libraries using the [transformation API](https://rudderstack.com/docs/transformations/rudderstack-transformation-api/). Read more in [this blog post](https://rudderstack.com/blog/rudderstacks-transformations-api). 
+> Note: The action does the work of testing a transformation for a given set of events, it's creation and updation along with any custom libraries using the [transformation API](https://www.rudderstack.com/docs/api/transformation-api/). Read more in [this blog post](https://rudderstack.com/blog/rudderstacks-transformations-api). 
 
-> For the action to work, one would need the workspace email and accessToken. Learn how to generate accessToken [here](https://rudderstack.com/docs/transformations/api-access-token/)
+> For the action to work, one would need the workspace email and accessToken. Learn how to generate accessToken [here](https://www.rudderstack.com/docs/dashboard-guides/personal-access-token/).
 
-> For examples of using the action, checkout this [sample repository](https://github.com/rudderlabs/rudder-transformation-action-code/tree/main/.github/workflows)
+> For examples of using the action, checkout this [sample repository](https://github.com/rudderlabs/rudder-transformation-action-code/tree/main/.github/workflows).
 
 > We recommend using git secrets to store your accessToken for security purposes and use it as mentioned in the above example
 
