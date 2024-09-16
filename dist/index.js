@@ -4979,6 +4979,853 @@ var isArray = Array.isArray || function (xs) {
 
 /***/ }),
 
+<<<<<<< HEAD
+=======
+/***/ 8222:
+/***/ ((module, exports, __nccwpck_require__) => {
+
+/* eslint-env browser */
+
+/**
+ * This is the web browser implementation of `debug()`.
+ */
+
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.storage = localstorage();
+exports.destroy = (() => {
+	let warned = false;
+
+	return () => {
+		if (!warned) {
+			warned = true;
+			console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
+		}
+	};
+})();
+
+/**
+ * Colors.
+ */
+
+exports.colors = [
+	'#0000CC',
+	'#0000FF',
+	'#0033CC',
+	'#0033FF',
+	'#0066CC',
+	'#0066FF',
+	'#0099CC',
+	'#0099FF',
+	'#00CC00',
+	'#00CC33',
+	'#00CC66',
+	'#00CC99',
+	'#00CCCC',
+	'#00CCFF',
+	'#3300CC',
+	'#3300FF',
+	'#3333CC',
+	'#3333FF',
+	'#3366CC',
+	'#3366FF',
+	'#3399CC',
+	'#3399FF',
+	'#33CC00',
+	'#33CC33',
+	'#33CC66',
+	'#33CC99',
+	'#33CCCC',
+	'#33CCFF',
+	'#6600CC',
+	'#6600FF',
+	'#6633CC',
+	'#6633FF',
+	'#66CC00',
+	'#66CC33',
+	'#9900CC',
+	'#9900FF',
+	'#9933CC',
+	'#9933FF',
+	'#99CC00',
+	'#99CC33',
+	'#CC0000',
+	'#CC0033',
+	'#CC0066',
+	'#CC0099',
+	'#CC00CC',
+	'#CC00FF',
+	'#CC3300',
+	'#CC3333',
+	'#CC3366',
+	'#CC3399',
+	'#CC33CC',
+	'#CC33FF',
+	'#CC6600',
+	'#CC6633',
+	'#CC9900',
+	'#CC9933',
+	'#CCCC00',
+	'#CCCC33',
+	'#FF0000',
+	'#FF0033',
+	'#FF0066',
+	'#FF0099',
+	'#FF00CC',
+	'#FF00FF',
+	'#FF3300',
+	'#FF3333',
+	'#FF3366',
+	'#FF3399',
+	'#FF33CC',
+	'#FF33FF',
+	'#FF6600',
+	'#FF6633',
+	'#FF9900',
+	'#FF9933',
+	'#FFCC00',
+	'#FFCC33'
+];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+// eslint-disable-next-line complexity
+function useColors() {
+	// NB: In an Electron preload script, document will be defined but not fully
+	// initialized. Since we know we're in Chrome, we'll just detect this case
+	// explicitly
+	if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
+		return true;
+	}
+
+	// Internet Explorer and Edge do not support colors.
+	if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
+		return false;
+	}
+
+	// Is webkit? http://stackoverflow.com/a/16459606/376773
+	// document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+	return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
+		// Is firebug? http://stackoverflow.com/a/398120/376773
+		(typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
+		// Is firefox >= v31?
+		// https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
+		// Double check webkit in userAgent just in case we are in a worker
+		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
+}
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs(args) {
+	args[0] = (this.useColors ? '%c' : '') +
+		this.namespace +
+		(this.useColors ? ' %c' : ' ') +
+		args[0] +
+		(this.useColors ? '%c ' : ' ') +
+		'+' + module.exports.humanize(this.diff);
+
+	if (!this.useColors) {
+		return;
+	}
+
+	const c = 'color: ' + this.color;
+	args.splice(1, 0, c, 'color: inherit');
+
+	// The final "%c" is somewhat tricky, because there could be other
+	// arguments passed either before or after the %c, so we need to
+	// figure out the correct index to insert the CSS into
+	let index = 0;
+	let lastC = 0;
+	args[0].replace(/%[a-zA-Z%]/g, match => {
+		if (match === '%%') {
+			return;
+		}
+		index++;
+		if (match === '%c') {
+			// We only are interested in the *last* %c
+			// (the user may have provided their own)
+			lastC = index;
+		}
+	});
+
+	args.splice(lastC, 0, c);
+}
+
+/**
+ * Invokes `console.debug()` when available.
+ * No-op when `console.debug` is not a "function".
+ * If `console.debug` is not available, falls back
+ * to `console.log`.
+ *
+ * @api public
+ */
+exports.log = console.debug || console.log || (() => {});
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+function save(namespaces) {
+	try {
+		if (namespaces) {
+			exports.storage.setItem('debug', namespaces);
+		} else {
+			exports.storage.removeItem('debug');
+		}
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+function load() {
+	let r;
+	try {
+		r = exports.storage.getItem('debug');
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+
+	// If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+	if (!r && typeof process !== 'undefined' && 'env' in process) {
+		r = process.env.DEBUG;
+	}
+
+	return r;
+}
+
+/**
+ * Localstorage attempts to return the localstorage.
+ *
+ * This is necessary because safari throws
+ * when a user disables cookies/localstorage
+ * and you attempt to access it.
+ *
+ * @return {LocalStorage}
+ * @api private
+ */
+
+function localstorage() {
+	try {
+		// TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
+		// The Browser also has localStorage in the global context.
+		return localStorage;
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+}
+
+module.exports = __nccwpck_require__(6243)(exports);
+
+const {formatters} = module.exports;
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+formatters.j = function (v) {
+	try {
+		return JSON.stringify(v);
+	} catch (error) {
+		return '[UnexpectedJSONParseError]: ' + error.message;
+	}
+};
+
+
+/***/ }),
+
+/***/ 6243:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+/**
+ * This is the common logic for both the Node.js and web browser
+ * implementations of `debug()`.
+ */
+
+function setup(env) {
+	createDebug.debug = createDebug;
+	createDebug.default = createDebug;
+	createDebug.coerce = coerce;
+	createDebug.disable = disable;
+	createDebug.enable = enable;
+	createDebug.enabled = enabled;
+	createDebug.humanize = __nccwpck_require__(900);
+	createDebug.destroy = destroy;
+
+	Object.keys(env).forEach(key => {
+		createDebug[key] = env[key];
+	});
+
+	/**
+	* The currently active debug mode names, and names to skip.
+	*/
+
+	createDebug.names = [];
+	createDebug.skips = [];
+
+	/**
+	* Map of special "%n" handling functions, for the debug "format" argument.
+	*
+	* Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+	*/
+	createDebug.formatters = {};
+
+	/**
+	* Selects a color for a debug namespace
+	* @param {String} namespace The namespace string for the debug instance to be colored
+	* @return {Number|String} An ANSI color code for the given namespace
+	* @api private
+	*/
+	function selectColor(namespace) {
+		let hash = 0;
+
+		for (let i = 0; i < namespace.length; i++) {
+			hash = ((hash << 5) - hash) + namespace.charCodeAt(i);
+			hash |= 0; // Convert to 32bit integer
+		}
+
+		return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
+	}
+	createDebug.selectColor = selectColor;
+
+	/**
+	* Create a debugger with the given `namespace`.
+	*
+	* @param {String} namespace
+	* @return {Function}
+	* @api public
+	*/
+	function createDebug(namespace) {
+		let prevTime;
+		let enableOverride = null;
+		let namespacesCache;
+		let enabledCache;
+
+		function debug(...args) {
+			// Disabled?
+			if (!debug.enabled) {
+				return;
+			}
+
+			const self = debug;
+
+			// Set `diff` timestamp
+			const curr = Number(new Date());
+			const ms = curr - (prevTime || curr);
+			self.diff = ms;
+			self.prev = prevTime;
+			self.curr = curr;
+			prevTime = curr;
+
+			args[0] = createDebug.coerce(args[0]);
+
+			if (typeof args[0] !== 'string') {
+				// Anything else let's inspect with %O
+				args.unshift('%O');
+			}
+
+			// Apply any `formatters` transformations
+			let index = 0;
+			args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format) => {
+				// If we encounter an escaped % then don't increase the array index
+				if (match === '%%') {
+					return '%';
+				}
+				index++;
+				const formatter = createDebug.formatters[format];
+				if (typeof formatter === 'function') {
+					const val = args[index];
+					match = formatter.call(self, val);
+
+					// Now we need to remove `args[index]` since it's inlined in the `format`
+					args.splice(index, 1);
+					index--;
+				}
+				return match;
+			});
+
+			// Apply env-specific formatting (colors, etc.)
+			createDebug.formatArgs.call(self, args);
+
+			const logFn = self.log || createDebug.log;
+			logFn.apply(self, args);
+		}
+
+		debug.namespace = namespace;
+		debug.useColors = createDebug.useColors();
+		debug.color = createDebug.selectColor(namespace);
+		debug.extend = extend;
+		debug.destroy = createDebug.destroy; // XXX Temporary. Will be removed in the next major release.
+
+		Object.defineProperty(debug, 'enabled', {
+			enumerable: true,
+			configurable: false,
+			get: () => {
+				if (enableOverride !== null) {
+					return enableOverride;
+				}
+				if (namespacesCache !== createDebug.namespaces) {
+					namespacesCache = createDebug.namespaces;
+					enabledCache = createDebug.enabled(namespace);
+				}
+
+				return enabledCache;
+			},
+			set: v => {
+				enableOverride = v;
+			}
+		});
+
+		// Env-specific initialization logic for debug instances
+		if (typeof createDebug.init === 'function') {
+			createDebug.init(debug);
+		}
+
+		return debug;
+	}
+
+	function extend(namespace, delimiter) {
+		const newDebug = createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+		newDebug.log = this.log;
+		return newDebug;
+	}
+
+	/**
+	* Enables a debug mode by namespaces. This can include modes
+	* separated by a colon and wildcards.
+	*
+	* @param {String} namespaces
+	* @api public
+	*/
+	function enable(namespaces) {
+		createDebug.save(namespaces);
+		createDebug.namespaces = namespaces;
+
+		createDebug.names = [];
+		createDebug.skips = [];
+
+		let i;
+		const split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+		const len = split.length;
+
+		for (i = 0; i < len; i++) {
+			if (!split[i]) {
+				// ignore empty strings
+				continue;
+			}
+
+			namespaces = split[i].replace(/\*/g, '.*?');
+
+			if (namespaces[0] === '-') {
+				createDebug.skips.push(new RegExp('^' + namespaces.slice(1) + '$'));
+			} else {
+				createDebug.names.push(new RegExp('^' + namespaces + '$'));
+			}
+		}
+	}
+
+	/**
+	* Disable debug output.
+	*
+	* @return {String} namespaces
+	* @api public
+	*/
+	function disable() {
+		const namespaces = [
+			...createDebug.names.map(toNamespace),
+			...createDebug.skips.map(toNamespace).map(namespace => '-' + namespace)
+		].join(',');
+		createDebug.enable('');
+		return namespaces;
+	}
+
+	/**
+	* Returns true if the given mode name is enabled, false otherwise.
+	*
+	* @param {String} name
+	* @return {Boolean}
+	* @api public
+	*/
+	function enabled(name) {
+		if (name[name.length - 1] === '*') {
+			return true;
+		}
+
+		let i;
+		let len;
+
+		for (i = 0, len = createDebug.skips.length; i < len; i++) {
+			if (createDebug.skips[i].test(name)) {
+				return false;
+			}
+		}
+
+		for (i = 0, len = createDebug.names.length; i < len; i++) {
+			if (createDebug.names[i].test(name)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	* Convert regexp to namespace
+	*
+	* @param {RegExp} regxep
+	* @return {String} namespace
+	* @api private
+	*/
+	function toNamespace(regexp) {
+		return regexp.toString()
+			.substring(2, regexp.toString().length - 2)
+			.replace(/\.\*\?$/, '*');
+	}
+
+	/**
+	* Coerce `val`.
+	*
+	* @param {Mixed} val
+	* @return {Mixed}
+	* @api private
+	*/
+	function coerce(val) {
+		if (val instanceof Error) {
+			return val.stack || val.message;
+		}
+		return val;
+	}
+
+	/**
+	* XXX DO NOT USE. This is a temporary stub function.
+	* XXX It WILL be removed in the next major release.
+	*/
+	function destroy() {
+		console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
+	}
+
+	createDebug.enable(createDebug.load());
+
+	return createDebug;
+}
+
+module.exports = setup;
+
+
+/***/ }),
+
+/***/ 8237:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+/**
+ * Detect Electron renderer / nwjs process, which is node, but we should
+ * treat as a browser.
+ */
+
+if (typeof process === 'undefined' || process.type === 'renderer' || process.browser === true || process.__nwjs) {
+	module.exports = __nccwpck_require__(8222);
+} else {
+	module.exports = __nccwpck_require__(4874);
+}
+
+
+/***/ }),
+
+/***/ 4874:
+/***/ ((module, exports, __nccwpck_require__) => {
+
+/**
+ * Module dependencies.
+ */
+
+const tty = __nccwpck_require__(6224);
+const util = __nccwpck_require__(3837);
+
+/**
+ * This is the Node.js implementation of `debug()`.
+ */
+
+exports.init = init;
+exports.log = log;
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.destroy = util.deprecate(
+	() => {},
+	'Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.'
+);
+
+/**
+ * Colors.
+ */
+
+exports.colors = [6, 2, 3, 4, 5, 1];
+
+try {
+	// Optional dependency (as in, doesn't need to be installed, NOT like optionalDependencies in package.json)
+	// eslint-disable-next-line import/no-extraneous-dependencies
+	const supportsColor = __nccwpck_require__(9318);
+
+	if (supportsColor && (supportsColor.stderr || supportsColor).level >= 2) {
+		exports.colors = [
+			20,
+			21,
+			26,
+			27,
+			32,
+			33,
+			38,
+			39,
+			40,
+			41,
+			42,
+			43,
+			44,
+			45,
+			56,
+			57,
+			62,
+			63,
+			68,
+			69,
+			74,
+			75,
+			76,
+			77,
+			78,
+			79,
+			80,
+			81,
+			92,
+			93,
+			98,
+			99,
+			112,
+			113,
+			128,
+			129,
+			134,
+			135,
+			148,
+			149,
+			160,
+			161,
+			162,
+			163,
+			164,
+			165,
+			166,
+			167,
+			168,
+			169,
+			170,
+			171,
+			172,
+			173,
+			178,
+			179,
+			184,
+			185,
+			196,
+			197,
+			198,
+			199,
+			200,
+			201,
+			202,
+			203,
+			204,
+			205,
+			206,
+			207,
+			208,
+			209,
+			214,
+			215,
+			220,
+			221
+		];
+	}
+} catch (error) {
+	// Swallow - we only care if `supports-color` is available; it doesn't have to be.
+}
+
+/**
+ * Build up the default `inspectOpts` object from the environment variables.
+ *
+ *   $ DEBUG_COLORS=no DEBUG_DEPTH=10 DEBUG_SHOW_HIDDEN=enabled node script.js
+ */
+
+exports.inspectOpts = Object.keys(process.env).filter(key => {
+	return /^debug_/i.test(key);
+}).reduce((obj, key) => {
+	// Camel-case
+	const prop = key
+		.substring(6)
+		.toLowerCase()
+		.replace(/_([a-z])/g, (_, k) => {
+			return k.toUpperCase();
+		});
+
+	// Coerce string value into JS value
+	let val = process.env[key];
+	if (/^(yes|on|true|enabled)$/i.test(val)) {
+		val = true;
+	} else if (/^(no|off|false|disabled)$/i.test(val)) {
+		val = false;
+	} else if (val === 'null') {
+		val = null;
+	} else {
+		val = Number(val);
+	}
+
+	obj[prop] = val;
+	return obj;
+}, {});
+
+/**
+ * Is stdout a TTY? Colored output is enabled when `true`.
+ */
+
+function useColors() {
+	return 'colors' in exports.inspectOpts ?
+		Boolean(exports.inspectOpts.colors) :
+		tty.isatty(process.stderr.fd);
+}
+
+/**
+ * Adds ANSI color escape codes if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs(args) {
+	const {namespace: name, useColors} = this;
+
+	if (useColors) {
+		const c = this.color;
+		const colorCode = '\u001B[3' + (c < 8 ? c : '8;5;' + c);
+		const prefix = `  ${colorCode};1m${name} \u001B[0m`;
+
+		args[0] = prefix + args[0].split('\n').join('\n' + prefix);
+		args.push(colorCode + 'm+' + module.exports.humanize(this.diff) + '\u001B[0m');
+	} else {
+		args[0] = getDate() + name + ' ' + args[0];
+	}
+}
+
+function getDate() {
+	if (exports.inspectOpts.hideDate) {
+		return '';
+	}
+	return new Date().toISOString() + ' ';
+}
+
+/**
+ * Invokes `util.format()` with the specified arguments and writes to stderr.
+ */
+
+function log(...args) {
+	return process.stderr.write(util.format(...args) + '\n');
+}
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+function save(namespaces) {
+	if (namespaces) {
+		process.env.DEBUG = namespaces;
+	} else {
+		// If you set a process.env field to null or undefined, it gets cast to the
+		// string 'null' or 'undefined'. Just delete instead.
+		delete process.env.DEBUG;
+	}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+
+function load() {
+	return process.env.DEBUG;
+}
+
+/**
+ * Init logic for `debug` instances.
+ *
+ * Create a new `inspectOpts` object in case `useColors` is set
+ * differently for a particular `debug` instance.
+ */
+
+function init(debug) {
+	debug.inspectOpts = {};
+
+	const keys = Object.keys(exports.inspectOpts);
+	for (let i = 0; i < keys.length; i++) {
+		debug.inspectOpts[keys[i]] = exports.inspectOpts[keys[i]];
+	}
+}
+
+module.exports = __nccwpck_require__(6243)(exports);
+
+const {formatters} = module.exports;
+
+/**
+ * Map %o to `util.inspect()`, all on a single line.
+ */
+
+formatters.o = function (v) {
+	this.inspectOpts.colors = this.useColors;
+	return util.inspect(v, this.inspectOpts)
+		.split('\n')
+		.map(str => str.trim())
+		.join(' ');
+};
+
+/**
+ * Map %O to `util.inspect()`, allowing multiple lines if needed.
+ */
+
+formatters.O = function (v) {
+	this.inspectOpts.colors = this.useColors;
+	return util.inspect(v, this.inspectOpts);
+};
+
+
+/***/ }),
+
+>>>>>>> e275e68 (fix: generate and add dist file)
 /***/ 8611:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -5102,7 +5949,11 @@ module.exports = function () {
   if (!debug) {
     try {
       /* eslint global-require: off */
+<<<<<<< HEAD
       debug = __nccwpck_require__(9975)("follow-redirects");
+=======
+      debug = __nccwpck_require__(8237)("follow-redirects");
+>>>>>>> e275e68 (fix: generate and add dist file)
     }
     catch (error) { /* */ }
     if (typeof debug !== "function") {
@@ -5126,6 +5977,7 @@ var Writable = (__nccwpck_require__(2781).Writable);
 var assert = __nccwpck_require__(9491);
 var debug = __nccwpck_require__(1133);
 
+<<<<<<< HEAD
 // Whether to use the native URL object or the legacy url module
 var useNativeURL = false;
 try {
@@ -5149,6 +6001,8 @@ var preservedUrlFields = [
   "search",
 ];
 
+=======
+>>>>>>> e275e68 (fix: generate and add dist file)
 // Create handlers that pass events from native requests
 var events = ["abort", "aborted", "connect", "error", "socket", "timeout"];
 var eventHandlers = Object.create(null);
@@ -5158,20 +6012,31 @@ events.forEach(function (event) {
   };
 });
 
+<<<<<<< HEAD
 // Error types with codes
+=======
+>>>>>>> e275e68 (fix: generate and add dist file)
 var InvalidUrlError = createErrorType(
   "ERR_INVALID_URL",
   "Invalid URL",
   TypeError
 );
+<<<<<<< HEAD
+=======
+// Error types with codes
+>>>>>>> e275e68 (fix: generate and add dist file)
 var RedirectionError = createErrorType(
   "ERR_FR_REDIRECTION_FAILURE",
   "Redirected request failed"
 );
 var TooManyRedirectsError = createErrorType(
   "ERR_FR_TOO_MANY_REDIRECTS",
+<<<<<<< HEAD
   "Maximum number of redirects exceeded",
   RedirectionError
+=======
+  "Maximum number of redirects exceeded"
+>>>>>>> e275e68 (fix: generate and add dist file)
 );
 var MaxBodyLengthExceededError = createErrorType(
   "ERR_FR_MAX_BODY_LENGTH_EXCEEDED",
@@ -5182,9 +6047,12 @@ var WriteAfterEndError = createErrorType(
   "write after end"
 );
 
+<<<<<<< HEAD
 // istanbul ignore next
 var destroy = Writable.prototype.destroy || noop;
 
+=======
+>>>>>>> e275e68 (fix: generate and add dist file)
 // An HTTP(S) request that can be redirected
 function RedirectableRequest(options, responseCallback) {
   // Initialize the request
@@ -5206,6 +6074,7 @@ function RedirectableRequest(options, responseCallback) {
   // React to responses of native requests
   var self = this;
   this._onNativeResponse = function (response) {
+<<<<<<< HEAD
     try {
       self._processResponse(response);
     }
@@ -5213,6 +6082,9 @@ function RedirectableRequest(options, responseCallback) {
       self.emit("error", cause instanceof RedirectionError ?
         cause : new RedirectionError({ cause: cause }));
     }
+=======
+    self._processResponse(response);
+>>>>>>> e275e68 (fix: generate and add dist file)
   };
 
   // Perform the first request
@@ -5221,6 +6093,7 @@ function RedirectableRequest(options, responseCallback) {
 RedirectableRequest.prototype = Object.create(Writable.prototype);
 
 RedirectableRequest.prototype.abort = function () {
+<<<<<<< HEAD
   destroyRequest(this._currentRequest);
   this._currentRequest.abort();
   this.emit("abort");
@@ -5232,6 +6105,12 @@ RedirectableRequest.prototype.destroy = function (error) {
   return this;
 };
 
+=======
+  abortRequest(this._currentRequest);
+  this.emit("abort");
+};
+
+>>>>>>> e275e68 (fix: generate and add dist file)
 // Writes buffered data to the current native request
 RedirectableRequest.prototype.write = function (data, encoding, callback) {
   // Writing is not allowed if end has been called
@@ -5344,7 +6223,10 @@ RedirectableRequest.prototype.setTimeout = function (msecs, callback) {
     self.removeListener("abort", clearTimer);
     self.removeListener("error", clearTimer);
     self.removeListener("response", clearTimer);
+<<<<<<< HEAD
     self.removeListener("close", clearTimer);
+=======
+>>>>>>> e275e68 (fix: generate and add dist file)
     if (callback) {
       self.removeListener("timeout", callback);
     }
@@ -5371,7 +6253,10 @@ RedirectableRequest.prototype.setTimeout = function (msecs, callback) {
   this.on("abort", clearTimer);
   this.on("error", clearTimer);
   this.on("response", clearTimer);
+<<<<<<< HEAD
   this.on("close", clearTimer);
+=======
+>>>>>>> e275e68 (fix: generate and add dist file)
 
   return this;
 };
@@ -5430,7 +6315,12 @@ RedirectableRequest.prototype._performRequest = function () {
   var protocol = this._options.protocol;
   var nativeProtocol = this._options.nativeProtocols[protocol];
   if (!nativeProtocol) {
+<<<<<<< HEAD
     throw new TypeError("Unsupported protocol " + protocol);
+=======
+    this.emit("error", new TypeError("Unsupported protocol " + protocol));
+    return;
+>>>>>>> e275e68 (fix: generate and add dist file)
   }
 
   // If specified, use the agent corresponding to the protocol
@@ -5522,14 +6412,23 @@ RedirectableRequest.prototype._processResponse = function (response) {
   }
 
   // The response is a redirect, so abort the current request
+<<<<<<< HEAD
   destroyRequest(this._currentRequest);
+=======
+  abortRequest(this._currentRequest);
+>>>>>>> e275e68 (fix: generate and add dist file)
   // Discard the remainder of the response to avoid waiting for data
   response.destroy();
 
   // RFC7231§6.4: A client SHOULD detect and intervene
   // in cyclical redirections (i.e., "infinite" redirection loops).
   if (++this._redirectCount > this._options.maxRedirects) {
+<<<<<<< HEAD
     throw new TooManyRedirectsError();
+=======
+    this.emit("error", new TooManyRedirectsError());
+    return;
+>>>>>>> e275e68 (fix: generate and add dist file)
   }
 
   // Store the request headers if applicable
@@ -5563,11 +6462,16 @@ RedirectableRequest.prototype._processResponse = function (response) {
   var currentHostHeader = removeMatchingHeaders(/^host$/i, this._options.headers);
 
   // If the redirect is relative, carry over the host of the last request
+<<<<<<< HEAD
   var currentUrlParts = parseUrl(this._currentUrl);
+=======
+  var currentUrlParts = url.parse(this._currentUrl);
+>>>>>>> e275e68 (fix: generate and add dist file)
   var currentHost = currentHostHeader || currentUrlParts.host;
   var currentUrl = /^\w+:/.test(location) ? this._currentUrl :
     url.format(Object.assign(currentUrlParts, { host: currentHost }));
 
+<<<<<<< HEAD
   // Create the redirected request
   var redirectUrl = resolveUrl(location, currentUrl);
   debug("redirecting to", redirectUrl.href);
@@ -5580,6 +6484,30 @@ RedirectableRequest.prototype._processResponse = function (response) {
      redirectUrl.protocol !== "https:" ||
      redirectUrl.host !== currentHost &&
      !isSubdomain(redirectUrl.host, currentHost)) {
+=======
+  // Determine the URL of the redirection
+  var redirectUrl;
+  try {
+    redirectUrl = url.resolve(currentUrl, location);
+  }
+  catch (cause) {
+    this.emit("error", new RedirectionError({ cause: cause }));
+    return;
+  }
+
+  // Create the redirected request
+  debug("redirecting to", redirectUrl);
+  this._isRedirect = true;
+  var redirectUrlParts = url.parse(redirectUrl);
+  Object.assign(this._options, redirectUrlParts);
+
+  // Drop confidential headers when redirecting to a less secure protocol
+  // or to a different domain that is not a superdomain
+  if (redirectUrlParts.protocol !== currentUrlParts.protocol &&
+     redirectUrlParts.protocol !== "https:" ||
+     redirectUrlParts.host !== currentHost &&
+     !isSubdomain(redirectUrlParts.host, currentHost)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
     removeMatchingHeaders(/^(?:authorization|cookie)$/i, this._options.headers);
   }
 
@@ -5594,12 +6522,31 @@ RedirectableRequest.prototype._processResponse = function (response) {
       method: method,
       headers: requestHeaders,
     };
+<<<<<<< HEAD
     beforeRedirect(this._options, responseDetails, requestDetails);
+=======
+    try {
+      beforeRedirect(this._options, responseDetails, requestDetails);
+    }
+    catch (err) {
+      this.emit("error", err);
+      return;
+    }
+>>>>>>> e275e68 (fix: generate and add dist file)
     this._sanitizeOptions(this._options);
   }
 
   // Perform the redirected request
+<<<<<<< HEAD
   this._performRequest();
+=======
+  try {
+    this._performRequest();
+  }
+  catch (cause) {
+    this.emit("error", new RedirectionError({ cause: cause }));
+  }
+>>>>>>> e275e68 (fix: generate and add dist file)
 };
 
 // Wraps the key/value object of protocols with redirect functionality
@@ -5619,6 +6566,7 @@ function wrap(protocols) {
 
     // Executes a request, following redirects
     function request(input, options, callback) {
+<<<<<<< HEAD
       // Parse parameters, ensuring that input is an object
       if (isURL(input)) {
         input = spreadUrlObject(input);
@@ -5629,6 +6577,29 @@ function wrap(protocols) {
       else {
         callback = options;
         options = validateUrl(input);
+=======
+      // Parse parameters
+      if (isString(input)) {
+        var parsed;
+        try {
+          parsed = urlToOptions(new URL(input));
+        }
+        catch (err) {
+          /* istanbul ignore next */
+          parsed = url.parse(input);
+        }
+        if (!isString(parsed.protocol)) {
+          throw new InvalidUrlError({ input });
+        }
+        input = parsed;
+      }
+      else if (URL && (input instanceof URL)) {
+        input = urlToOptions(input);
+      }
+      else {
+        callback = options;
+        options = input;
+>>>>>>> e275e68 (fix: generate and add dist file)
         input = { protocol: protocol };
       }
       if (isFunction(options)) {
@@ -5667,6 +6638,7 @@ function wrap(protocols) {
   return exports;
 }
 
+<<<<<<< HEAD
 function noop() { /* empty */ }
 
 function parseUrl(input) {
@@ -5718,6 +6690,29 @@ function spreadUrlObject(urlObject, target) {
   spread.path = spread.search ? spread.pathname + spread.search : spread.pathname;
 
   return spread;
+=======
+/* istanbul ignore next */
+function noop() { /* empty */ }
+
+// from https://github.com/nodejs/node/blob/master/lib/internal/url.js
+function urlToOptions(urlObject) {
+  var options = {
+    protocol: urlObject.protocol,
+    hostname: urlObject.hostname.startsWith("[") ?
+      /* istanbul ignore next */
+      urlObject.hostname.slice(1, -1) :
+      urlObject.hostname,
+    hash: urlObject.hash,
+    search: urlObject.search,
+    pathname: urlObject.pathname,
+    path: urlObject.pathname + urlObject.search,
+    href: urlObject.href,
+  };
+  if (urlObject.port !== "") {
+    options.port = Number(urlObject.port);
+  }
+  return options;
+>>>>>>> e275e68 (fix: generate and add dist file)
 }
 
 function removeMatchingHeaders(regex, headers) {
@@ -5743,6 +6738,7 @@ function createErrorType(code, message, baseClass) {
 
   // Attach constructor and set default properties
   CustomError.prototype = new (baseClass || Error)();
+<<<<<<< HEAD
   Object.defineProperties(CustomError.prototype, {
     constructor: {
       value: CustomError,
@@ -5757,11 +6753,23 @@ function createErrorType(code, message, baseClass) {
 }
 
 function destroyRequest(request, error) {
+=======
+  CustomError.prototype.constructor = CustomError;
+  CustomError.prototype.name = "Error [" + code + "]";
+  return CustomError;
+}
+
+function abortRequest(request) {
+>>>>>>> e275e68 (fix: generate and add dist file)
   for (var event of events) {
     request.removeListener(event, eventHandlers[event]);
   }
   request.on("error", noop);
+<<<<<<< HEAD
   request.destroy(error);
+=======
+  request.abort();
+>>>>>>> e275e68 (fix: generate and add dist file)
 }
 
 function isSubdomain(subdomain, domain) {
@@ -5782,10 +6790,13 @@ function isBuffer(value) {
   return typeof value === "object" && ("length" in value);
 }
 
+<<<<<<< HEAD
 function isURL(value) {
   return URL && value instanceof URL;
 }
 
+=======
+>>>>>>> e275e68 (fix: generate and add dist file)
 // Exports
 module.exports = wrap({ http: http, https: https });
 module.exports.wrap = wrap;
@@ -8236,6 +9247,25 @@ GlobSync.prototype._makeAbs = function (f) {
 
 /***/ }),
 
+<<<<<<< HEAD
+=======
+/***/ 1621:
+/***/ ((module) => {
+
+"use strict";
+
+
+module.exports = (flag, argv = process.argv) => {
+	const prefix = flag.startsWith('-') ? '' : (flag.length === 1 ? '-' : '--');
+	const position = argv.indexOf(prefix + flag);
+	const terminatorPosition = argv.indexOf('--');
+	return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
+};
+
+
+/***/ }),
+
+>>>>>>> e275e68 (fix: generate and add dist file)
 /***/ 2492:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -29656,6 +30686,178 @@ function regExpEscape (s) {
 
 /***/ }),
 
+<<<<<<< HEAD
+=======
+/***/ 900:
+/***/ ((module) => {
+
+/**
+ * Helpers.
+ */
+
+var s = 1000;
+var m = s * 60;
+var h = m * 60;
+var d = h * 24;
+var w = d * 7;
+var y = d * 365.25;
+
+/**
+ * Parse or format the given `val`.
+ *
+ * Options:
+ *
+ *  - `long` verbose formatting [false]
+ *
+ * @param {String|Number} val
+ * @param {Object} [options]
+ * @throws {Error} throw an error if val is not a non-empty string or a number
+ * @return {String|Number}
+ * @api public
+ */
+
+module.exports = function(val, options) {
+  options = options || {};
+  var type = typeof val;
+  if (type === 'string' && val.length > 0) {
+    return parse(val);
+  } else if (type === 'number' && isFinite(val)) {
+    return options.long ? fmtLong(val) : fmtShort(val);
+  }
+  throw new Error(
+    'val is not a non-empty string or a valid number. val=' +
+      JSON.stringify(val)
+  );
+};
+
+/**
+ * Parse the given `str` and return milliseconds.
+ *
+ * @param {String} str
+ * @return {Number}
+ * @api private
+ */
+
+function parse(str) {
+  str = String(str);
+  if (str.length > 100) {
+    return;
+  }
+  var match = /^(-?(?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
+    str
+  );
+  if (!match) {
+    return;
+  }
+  var n = parseFloat(match[1]);
+  var type = (match[2] || 'ms').toLowerCase();
+  switch (type) {
+    case 'years':
+    case 'year':
+    case 'yrs':
+    case 'yr':
+    case 'y':
+      return n * y;
+    case 'weeks':
+    case 'week':
+    case 'w':
+      return n * w;
+    case 'days':
+    case 'day':
+    case 'd':
+      return n * d;
+    case 'hours':
+    case 'hour':
+    case 'hrs':
+    case 'hr':
+    case 'h':
+      return n * h;
+    case 'minutes':
+    case 'minute':
+    case 'mins':
+    case 'min':
+    case 'm':
+      return n * m;
+    case 'seconds':
+    case 'second':
+    case 'secs':
+    case 'sec':
+    case 's':
+      return n * s;
+    case 'milliseconds':
+    case 'millisecond':
+    case 'msecs':
+    case 'msec':
+    case 'ms':
+      return n;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Short format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtShort(ms) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return Math.round(ms / d) + 'd';
+  }
+  if (msAbs >= h) {
+    return Math.round(ms / h) + 'h';
+  }
+  if (msAbs >= m) {
+    return Math.round(ms / m) + 'm';
+  }
+  if (msAbs >= s) {
+    return Math.round(ms / s) + 's';
+  }
+  return ms + 'ms';
+}
+
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtLong(ms) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return plural(ms, msAbs, d, 'day');
+  }
+  if (msAbs >= h) {
+    return plural(ms, msAbs, h, 'hour');
+  }
+  if (msAbs >= m) {
+    return plural(ms, msAbs, m, 'minute');
+  }
+  if (msAbs >= s) {
+    return plural(ms, msAbs, s, 'second');
+  }
+  return ms + ' ms';
+}
+
+/**
+ * Pluralization helper.
+ */
+
+function plural(ms, msAbs, n, name) {
+  var isPlural = msAbs >= n * 1.5;
+  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
+}
+
+
+/***/ }),
+
+>>>>>>> e275e68 (fix: generate and add dist file)
 /***/ 1223:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -30216,6 +31418,152 @@ rimraf.sync = rimrafSync
 
 /***/ }),
 
+<<<<<<< HEAD
+=======
+/***/ 9318:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+const os = __nccwpck_require__(2037);
+const tty = __nccwpck_require__(6224);
+const hasFlag = __nccwpck_require__(1621);
+
+const {env} = process;
+
+let forceColor;
+if (hasFlag('no-color') ||
+	hasFlag('no-colors') ||
+	hasFlag('color=false') ||
+	hasFlag('color=never')) {
+	forceColor = 0;
+} else if (hasFlag('color') ||
+	hasFlag('colors') ||
+	hasFlag('color=true') ||
+	hasFlag('color=always')) {
+	forceColor = 1;
+}
+
+if ('FORCE_COLOR' in env) {
+	if (env.FORCE_COLOR === 'true') {
+		forceColor = 1;
+	} else if (env.FORCE_COLOR === 'false') {
+		forceColor = 0;
+	} else {
+		forceColor = env.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env.FORCE_COLOR, 10), 3);
+	}
+}
+
+function translateLevel(level) {
+	if (level === 0) {
+		return false;
+	}
+
+	return {
+		level,
+		hasBasic: true,
+		has256: level >= 2,
+		has16m: level >= 3
+	};
+}
+
+function supportsColor(haveStream, streamIsTTY) {
+	if (forceColor === 0) {
+		return 0;
+	}
+
+	if (hasFlag('color=16m') ||
+		hasFlag('color=full') ||
+		hasFlag('color=truecolor')) {
+		return 3;
+	}
+
+	if (hasFlag('color=256')) {
+		return 2;
+	}
+
+	if (haveStream && !streamIsTTY && forceColor === undefined) {
+		return 0;
+	}
+
+	const min = forceColor || 0;
+
+	if (env.TERM === 'dumb') {
+		return min;
+	}
+
+	if (process.platform === 'win32') {
+		// Windows 10 build 10586 is the first Windows release that supports 256 colors.
+		// Windows 10 build 14931 is the first release that supports 16m/TrueColor.
+		const osRelease = os.release().split('.');
+		if (
+			Number(osRelease[0]) >= 10 &&
+			Number(osRelease[2]) >= 10586
+		) {
+			return Number(osRelease[2]) >= 14931 ? 3 : 2;
+		}
+
+		return 1;
+	}
+
+	if ('CI' in env) {
+		if (['TRAVIS', 'CIRCLECI', 'APPVEYOR', 'GITLAB_CI', 'GITHUB_ACTIONS', 'BUILDKITE'].some(sign => sign in env) || env.CI_NAME === 'codeship') {
+			return 1;
+		}
+
+		return min;
+	}
+
+	if ('TEAMCITY_VERSION' in env) {
+		return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env.TEAMCITY_VERSION) ? 1 : 0;
+	}
+
+	if (env.COLORTERM === 'truecolor') {
+		return 3;
+	}
+
+	if ('TERM_PROGRAM' in env) {
+		const version = parseInt((env.TERM_PROGRAM_VERSION || '').split('.')[0], 10);
+
+		switch (env.TERM_PROGRAM) {
+			case 'iTerm.app':
+				return version >= 3 ? 3 : 2;
+			case 'Apple_Terminal':
+				return 2;
+			// No default
+		}
+	}
+
+	if (/-256(color)?$/i.test(env.TERM)) {
+		return 2;
+	}
+
+	if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env.TERM)) {
+		return 1;
+	}
+
+	if ('COLORTERM' in env) {
+		return 1;
+	}
+
+	return min;
+}
+
+function getSupportLevel(stream) {
+	const level = supportsColor(stream, stream && stream.isTTY);
+	return translateLevel(level);
+}
+
+module.exports = {
+	supportsColor: getSupportLevel,
+	stdout: translateLevel(supportsColor(true, tty.isatty(1))),
+	stderr: translateLevel(supportsColor(true, tty.isatty(2)))
+};
+
+
+/***/ }),
+
+>>>>>>> e275e68 (fix: generate and add dist file)
 /***/ 8065:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -32042,35 +33390,62 @@ const listTransformationsEndpoint = `${serverEndpoint}/transformations`;
 const listLibrariesEndpoint = `${serverEndpoint}/libraries`;
 
 const defaultHeader = {
+<<<<<<< HEAD
   "user-agent": "transformationAction"
 }
 
 async function getAllTransformations() {
+=======
+  "user-agent": "transformationAction",
+};
+
+async function getAllTransformations() {
+  core.info(`Getting all transformations from upstream`);
+
+>>>>>>> e275e68 (fix: generate and add dist file)
   return axios.default.get(listTransformationsEndpoint, {
     auth: {
       username: core.getInput("email"),
       password: core.getInput("accessToken"),
     },
     headers: {
+<<<<<<< HEAD
       ...defaultHeader
+=======
+      ...defaultHeader,
+>>>>>>> e275e68 (fix: generate and add dist file)
     },
   });
 }
 
 async function getAllLibraries() {
+<<<<<<< HEAD
+=======
+  core.info(`Getting all libraries from upstream`);
+
+>>>>>>> e275e68 (fix: generate and add dist file)
   return axios.default.get(listLibrariesEndpoint, {
     auth: {
       username: core.getInput("email"),
       password: core.getInput("accessToken"),
     },
     headers: {
+<<<<<<< HEAD
       ...defaultHeader
+=======
+      ...defaultHeader,
+>>>>>>> e275e68 (fix: generate and add dist file)
     },
   });
 }
 
 async function createTransformation(name, description, code, language) {
+<<<<<<< HEAD
   core.info(`Created transformation: ${name}`);
+=======
+  core.info(`Creating transformation: ${name}`);
+
+>>>>>>> e275e68 (fix: generate and add dist file)
   return axios.default.post(
     `${createTransformerEndpoint}?publish=false`,
     {
@@ -32085,14 +33460,25 @@ async function createTransformation(name, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
+<<<<<<< HEAD
         ...defaultHeader
       },
     }
+=======
+        ...defaultHeader,
+      },
+    },
+>>>>>>> e275e68 (fix: generate and add dist file)
   );
 }
 
 async function updateTransformation(id, name, description, code, language) {
+<<<<<<< HEAD
   core.info(`Updated transformation: ${name}`);
+=======
+  core.info(`Updating transformation: ${name}`);
+
+>>>>>>> e275e68 (fix: generate and add dist file)
   return axios.default.post(
     `${createTransformerEndpoint}/${id}?publish=false`,
     {
@@ -32106,13 +33492,24 @@ async function updateTransformation(id, name, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
+<<<<<<< HEAD
         ...defaultHeader
       },
     }
+=======
+        ...defaultHeader,
+      },
+    },
+>>>>>>> e275e68 (fix: generate and add dist file)
   );
 }
 
 async function createLibrary(name, description, code, language) {
+<<<<<<< HEAD
+=======
+  core.info(`Creating library: ${name}`);
+
+>>>>>>> e275e68 (fix: generate and add dist file)
   return axios.default.post(
     `${createLibraryEndpoint}?publish=false`,
     {
@@ -32127,13 +33524,24 @@ async function createLibrary(name, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
+<<<<<<< HEAD
         ...defaultHeader
       },
     }
+=======
+        ...defaultHeader,
+      },
+    },
+>>>>>>> e275e68 (fix: generate and add dist file)
   );
 }
 
 async function updateLibrary(id, description, code, language) {
+<<<<<<< HEAD
+=======
+  core.info(`Updating library: ${id}`);
+
+>>>>>>> e275e68 (fix: generate and add dist file)
   return axios.default.post(
     `${createLibraryEndpoint}/${id}?publish=false`,
     {
@@ -32147,13 +33555,24 @@ async function updateLibrary(id, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
+<<<<<<< HEAD
         ...defaultHeader
       },
     }
+=======
+        ...defaultHeader,
+      },
+    },
+>>>>>>> e275e68 (fix: generate and add dist file)
   );
 }
 
 async function testTransformationAndLibrary(transformations, libraries) {
+<<<<<<< HEAD
+=======
+  core.info("Testing transformations and libraries");
+
+>>>>>>> e275e68 (fix: generate and add dist file)
   return axios.default.post(
     `${testEndpoint}`,
     {
@@ -32166,13 +33585,24 @@ async function testTransformationAndLibrary(transformations, libraries) {
         password: core.getInput("accessToken"),
       },
       headers: {
+<<<<<<< HEAD
         ...defaultHeader
       },
     }
+=======
+        ...defaultHeader,
+      },
+    },
+>>>>>>> e275e68 (fix: generate and add dist file)
   );
 }
 
 async function publish(transformations, libraries, commitId) {
+<<<<<<< HEAD
+=======
+  core.info("Publishing transformations and libraries");
+
+>>>>>>> e275e68 (fix: generate and add dist file)
   return axios.default.post(
     `${publishEndpoint}`,
     {
@@ -32186,9 +33616,15 @@ async function publish(transformations, libraries, commitId) {
         password: core.getInput("accessToken"),
       },
       headers: {
+<<<<<<< HEAD
         ...defaultHeader
       },
     }
+=======
+        ...defaultHeader,
+      },
+    },
+>>>>>>> e275e68 (fix: generate and add dist file)
   );
 }
 
@@ -32206,10 +33642,397 @@ module.exports = {
 
 /***/ }),
 
+<<<<<<< HEAD
 /***/ 9975:
 /***/ ((module) => {
 
 module.exports = eval("require")("debug");
+=======
+/***/ 1713:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const core = __nccwpck_require__(2186);
+const fs = __nccwpck_require__(7147);
+const isEqual = __nccwpck_require__(52);
+const artifact = __nccwpck_require__(2605);
+const { detailedDiff } = __nccwpck_require__(5503);
+const artifactClient = artifact.create();
+const _ = __nccwpck_require__(250);
+const {
+  getAllTransformations,
+  getAllLibraries,
+  createTransformation,
+  createLibrary,
+  updateTransformation,
+  updateLibrary,
+  testTransformationAndLibrary,
+  publish,
+} = __nccwpck_require__(9620);
+
+const testOutputDir = "./test-outputs";
+const uploadTestArtifact =
+  core.getInput("uploadTestArtifact")?.toLowerCase() == "true";
+const metaFilePath = core.getInput("metaPath");
+
+const testOnly = process.env.TEST_ONLY !== "false";
+const commitId = process.env.GITHUB_SHA || "";
+
+// Load transformations and libraries from a local meta file.
+function getTransformationsAndLibrariesFromLocal(fpath) {
+  core.info(`Loading transformations and libraries locally from: ${fpath}`);
+
+  const transformations = [];
+  const libraries = [];
+
+  let meta = JSON.parse(fs.readFileSync(fpath, "utf-8"));
+  if (meta.transformations) {
+    transformations.push(...meta.transformations);
+  }
+  if (meta.libraries) {
+    libraries.push(...meta.libraries);
+  }
+  return { transformations, libraries };
+}
+
+function buildNameToIdMap(arr) {
+  return arr.reduce((map, entry) => {
+    map[entry.name] = entry.id;
+    return map;
+  }, {});
+}
+
+// Fetch transformation and libraries.
+async function loadTransformationsAndLibraries() {
+  let workspaceTransformations = [];
+  let workspaceLibraries = [];
+
+  const transformationsResponse = await getAllTransformations();
+  workspaceTransformations = transformationsResponse.data
+    ? JSON.parse(JSON.stringify(transformationsResponse.data.transformations))
+    : [];
+
+  const librariesResponse = await getAllLibraries();
+  workspaceLibraries = librariesResponse.data
+    ? JSON.parse(JSON.stringify(librariesResponse.data.libraries))
+    : [];
+
+  return { workspaceTransformations, workspaceLibraries };
+}
+
+// Create or update transformations
+async function upsertTransformations(transformations, transformationNameToId) {
+  core.info(`Upserting transformations`);
+
+  const transformationDict = {};
+
+  for (const tr of transformations) {
+    const code = fs.readFileSync(tr.file, "utf-8");
+    let res;
+    if (transformationNameToId[tr.name]) {
+      // update existing transformer and get a new versionId
+      const id = transformationNameToId[tr.name];
+      res = await updateTransformation(
+        id,
+        tr.name,
+        tr.description,
+        code,
+        tr.language,
+      );
+    } else {
+      core.info(`Creating transformation: ${tr.name}`);
+      // create new transformer
+      res = await createTransformation(
+        tr.name,
+        tr.description,
+        code,
+        tr.language,
+      );
+    }
+    transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
+  }
+
+  return transformationDict;
+}
+
+// Create or update a library.
+async function upsertLibraries(libraries, libraryNameToId) {
+  core.info(`Upserting libraries upstream`);
+
+  const libraryDict = {};
+  for (const lib of libraries) {
+    const code = fs.readFileSync(lib.file, "utf-8");
+    let res;
+    if (libraryNameToId[lib.name]) {
+      // update library and get a new versionId
+      core.info(`Updating library: ${lib.name}`);
+      const id = libraryNameToId[lib.name];
+      res = await updateLibrary(id, lib.description, code, lib.language);
+    } else {
+      // create a new library
+      core.info(`Creating library: ${lib.name}`);
+      res = await createLibrary(lib.name, lib.description, code, lib.language);
+    }
+    libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
+  }
+  return libraryDict;
+}
+
+// Build the test suite.
+async function buildTestSuite(transformationDict, libraryDict) {
+  core.info("Building test suite");
+
+  const transformationTest = [],
+    librariesTest = [];
+
+  for (const trVersionId of Object.keys(transformationDict)) {
+    const testInputPath =
+      transformationDict[trVersionId]["test-input-file"] || "";
+    const testInput = testInputPath
+      ? JSON.parse(fs.readFileSync(testInputPath))
+      : "";
+    if (testInput) {
+      transformationTest.push({ versionId: trVersionId, testInput });
+    } else {
+      core.info(
+        `No test input provided. Testing ${transformationDict[trVersionId].name} with default payload`,
+      );
+      transformationTest.push({ versionId: trVersionId });
+    }
+  }
+
+  for (const versionId of Object.keys(libraryDict)) {
+    librariesTest.push({ versionId });
+  }
+
+  core.info(
+    `Final transformation versions to be tested:
+    ${JSON.stringify(transformationTest)}`,
+  );
+  core.info(
+    `Final library versions to be tested: ${JSON.stringify(librariesTest)}`,
+  );
+  return { transformationTest, librariesTest };
+}
+
+// Run the test suite.
+async function runTestSuite(transformationTest, librariesTest) {
+  core.info("Running test suite for transformations and libraries");
+
+  let res = await testTransformationAndLibrary(
+    transformationTest,
+    librariesTest,
+  );
+
+  logResult(res.data.result);
+
+  if (res.data.result.failedTestResults.length > 0) {
+    throw new Error(
+      "Failures occured while running tests against input events",
+    );
+  }
+
+  return res;
+}
+
+// Compare the API output with the actual output.
+async function compareOutput(successResults, transformationDict) {
+  core.info("Comparing actual output with expected output");
+
+  const outputMismatchResults = [];
+  const testOutputFiles = [];
+  for (const successResult of successResults) {
+    const transformerVersionID = successResult.transformerVersionID;
+
+    if (!fs.existsSync(testOutputDir)) {
+      fs.mkdirSync(testOutputDir);
+    }
+    if (!transformationDict.hasOwnProperty(transformerVersionID)) {
+      core.warn(
+        `Transformer with version id: ${transformerVersionID} not found.`,
+      );
+      continue;
+    }
+
+    const actualOutput = successResult.result.output.transformedEvents;
+    const transformationName = transformationDict[transformerVersionID].name;
+    const transformationHandleName = _.camelCase(transformationName);
+
+    fs.writeFileSync(
+      `${testOutputDir}/${transformationHandleName}_output.json`,
+      JSON.stringify(actualOutput, null, 2),
+    );
+    testOutputFiles.push(
+      `${testOutputDir}/${transformationHandleName}_output.json`,
+    );
+
+    if (
+      !transformationDict[transformerVersionID].hasOwnProperty(
+        "expected-output",
+      )
+    ) {
+      continue;
+    }
+
+    const expectedOutputfile =
+      transformationDict[transformerVersionID]["expected-output"];
+    const expectedOutput = expectedOutputfile
+      ? JSON.parse(fs.readFileSync(expectedOutputfile))
+      : "";
+
+    if (expectedOutput == "") {
+      continue;
+    }
+
+    if (!isEqual(expectedOutput, actualOutput)) {
+      core.info(
+        `Test output do not match for transformation: ${transformationName}`,
+      );
+      outputMismatchResults.push(
+        `Test output do not match for transformation: ${transformationName}`,
+      );
+
+      fs.writeFileSync(
+        `${testOutputDir}/${transformationHandleName}_diff.json`,
+        JSON.stringify(detailedDiff(expectedOutput, actualOutput), null, 2),
+      );
+
+      testOutputFiles.push(
+        `${testOutputDir}/${transformationHandleName}_diff.json`,
+      );
+    }
+  }
+  return { outputMismatchResults, testOutputFiles };
+}
+
+// Upload the test results to an artifact store.
+async function uploadTestArtifacts(testOutputFiles) {
+  core.info(`Uploading test artifacts`);
+  // upload artifact
+
+  core.info("Uploading test api output");
+  const artifactClientResponse = await artifactClient.uploadArtifact(
+    "transformer-test-results",
+    testOutputFiles,
+    ".",
+  );
+
+  if (artifactClientResponse.failedItems.length > 0) {
+    throw new Error(
+      `Artifacts upload failed, items: ${JSON.stringify(failedItems)}`,
+    );
+  }
+}
+
+// Publish the transformations and libraries.
+async function publishTransformation(
+  transformationTest,
+  librariesTest,
+  commitId,
+) {
+  core.info(`Publishing transformations and libraries`);
+  // publish
+  await publish(transformationTest, librariesTest, commitId);
+}
+
+function colorize(message, color) {
+  const colors = {
+    reset: "\x1b[0m",
+    red: "\x1b[31m",
+    green: "\x1b[32m",
+    yellow: "\x1b[33m",
+    blue: "\x1b[34m",
+    magenta: "\x1b[35m",
+    cyan: "\x1b[36m",
+    white: "\x1b[37m",
+  };
+
+  return `${colors[color]}${message}${colors.reset}`;
+}
+
+// Log failed tests
+function logResult(result) {
+  core.info(
+    colorize(
+      `\nTotal tests ${
+        result.successTestResults.length + result.failedTestResults.length
+      }, ${result.successTestResults.length} passed and ${
+        result.failedTestResults.length
+      } failed\n`,
+      "yellow",
+    ),
+  );
+  if (result.failedTestResults.length > 0) {
+    core.info(colorize("\nFailed Tests:\n", "yellow"));
+
+    for (const test of result.failedTestResults) {
+      core.info(colorize(`   ID: ${test.id}`, "red"));
+      core.info(colorize(`   Name: ${test.name}`, "red"));
+      core.info(colorize(`   Error: ${JSON.stringify(test.result)}\n`, "red"));
+      core.info("\n" + "=".repeat(40) + "\n"); // Add a line of equal signs between logs
+    }
+  }
+}
+
+async function testAndPublish(path = metaFilePath) {
+  core.info(
+    "Starting with test and publish of the transformations and libraries",
+  );
+
+  const { transformations, libraries } =
+    getTransformationsAndLibrariesFromLocal(path);
+
+  const { workspaceTransformations, workspaceLibraries } =
+    await loadTransformationsAndLibraries();
+
+  const transformationNameToId = buildNameToIdMap(workspaceTransformations);
+  const libraryNameToId = buildNameToIdMap(workspaceLibraries);
+
+  const transformationDict = await upsertTransformations(
+    transformations,
+    transformationNameToId,
+  );
+
+  const libraryDict = await upsertLibraries(libraries, libraryNameToId);
+
+  const { transformationTest, librariesTest } = await buildTestSuite(
+    transformationDict,
+    libraryDict,
+  );
+
+  const testSuiteResult = (
+    await runTestSuite(transformationTest, librariesTest)
+  ).data.result;
+
+  const { outputMismatchResults, testOutputFiles } = await compareOutput(
+    testSuiteResult.successTestResults,
+    transformationDict,
+  );
+
+  if (uploadTestArtifact) {
+    await uploadTestArtifacts(testOutputFiles);
+  }
+
+  if (outputMismatchResults.length > 0) {
+    throw new Error(outputMismatchResults.join(", "));
+  }
+
+  if (!testOnly) {
+    await publishTransformation(transformationTest, librariesTest, commitId);
+  }
+
+  core.info("Successfully executed the workflow");
+}
+
+module.exports = {
+  getTransformationsAndLibrariesFromLocal,
+  buildNameToIdMap,
+  loadTransformationsAndLibraries,
+  upsertTransformations,
+  upsertLibraries,
+  buildTestSuite,
+  testAndPublish,
+};
+>>>>>>> e275e68 (fix: generate and add dist file)
 
 
 /***/ }),
@@ -32310,6 +34133,17 @@ module.exports = require("tls");
 
 /***/ }),
 
+<<<<<<< HEAD
+=======
+/***/ 6224:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("tty");
+
+/***/ }),
+
+>>>>>>> e275e68 (fix: generate and add dist file)
 /***/ 7310:
 /***/ ((module) => {
 
@@ -32619,7 +34453,11 @@ exports.makeObjectWithoutPrototype = makeObjectWithoutPrototype;
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
+<<<<<<< HEAD
 // Axios v1.6.4 Copyright (c) 2024 Matt Zabriskie and contributors
+=======
+// Axios v1.6.0 Copyright (c) 2023 Matt Zabriskie and contributors
+>>>>>>> e275e68 (fix: generate and add dist file)
 
 
 const FormData$1 = __nccwpck_require__(4334);
@@ -33317,7 +35155,11 @@ const isAsyncFn = kindOfTest('AsyncFunction');
 const isThenable = (thing) =>
   thing && (isObject(thing) || isFunction(thing)) && isFunction(thing.then) && isFunction(thing.catch);
 
+<<<<<<< HEAD
 const utils$1 = {
+=======
+const utils = {
+>>>>>>> e275e68 (fix: generate and add dist file)
   isArray,
   isArrayBuffer,
   isBuffer,
@@ -33399,7 +35241,11 @@ function AxiosError(message, code, config, request, response) {
   response && (this.response = response);
 }
 
+<<<<<<< HEAD
 utils$1.inherits(AxiosError, Error, {
+=======
+utils.inherits(AxiosError, Error, {
+>>>>>>> e275e68 (fix: generate and add dist file)
   toJSON: function toJSON() {
     return {
       // Standard
@@ -33414,7 +35260,11 @@ utils$1.inherits(AxiosError, Error, {
       columnNumber: this.columnNumber,
       stack: this.stack,
       // Axios
+<<<<<<< HEAD
       config: utils$1.toJSONObject(this.config),
+=======
+      config: utils.toJSONObject(this.config),
+>>>>>>> e275e68 (fix: generate and add dist file)
       code: this.code,
       status: this.response && this.response.status ? this.response.status : null
     };
@@ -33449,7 +35299,11 @@ Object.defineProperty(prototype$1, 'isAxiosError', {value: true});
 AxiosError.from = (error, code, config, request, response, customProps) => {
   const axiosError = Object.create(prototype$1);
 
+<<<<<<< HEAD
   utils$1.toFlatObject(error, axiosError, function filter(obj) {
+=======
+  utils.toFlatObject(error, axiosError, function filter(obj) {
+>>>>>>> e275e68 (fix: generate and add dist file)
     return obj !== Error.prototype;
   }, prop => {
     return prop !== 'isAxiosError';
@@ -33474,7 +35328,11 @@ AxiosError.from = (error, code, config, request, response, customProps) => {
  * @returns {boolean}
  */
 function isVisitable(thing) {
+<<<<<<< HEAD
   return utils$1.isPlainObject(thing) || utils$1.isArray(thing);
+=======
+  return utils.isPlainObject(thing) || utils.isArray(thing);
+>>>>>>> e275e68 (fix: generate and add dist file)
 }
 
 /**
@@ -33485,7 +35343,11 @@ function isVisitable(thing) {
  * @returns {string} the key without the brackets.
  */
 function removeBrackets(key) {
+<<<<<<< HEAD
   return utils$1.endsWith(key, '[]') ? key.slice(0, -2) : key;
+=======
+  return utils.endsWith(key, '[]') ? key.slice(0, -2) : key;
+>>>>>>> e275e68 (fix: generate and add dist file)
 }
 
 /**
@@ -33514,10 +35376,17 @@ function renderKey(path, key, dots) {
  * @returns {boolean}
  */
 function isFlatArray(arr) {
+<<<<<<< HEAD
   return utils$1.isArray(arr) && !arr.some(isVisitable);
 }
 
 const predicates = utils$1.toFlatObject(utils$1, {}, null, function filter(prop) {
+=======
+  return utils.isArray(arr) && !arr.some(isVisitable);
+}
+
+const predicates = utils.toFlatObject(utils, {}, null, function filter(prop) {
+>>>>>>> e275e68 (fix: generate and add dist file)
   return /^is[A-Z]/.test(prop);
 });
 
@@ -33545,7 +35414,11 @@ const predicates = utils$1.toFlatObject(utils$1, {}, null, function filter(prop)
  * @returns
  */
 function toFormData(obj, formData, options) {
+<<<<<<< HEAD
   if (!utils$1.isObject(obj)) {
+=======
+  if (!utils.isObject(obj)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
     throw new TypeError('target must be an object');
   }
 
@@ -33553,13 +35426,21 @@ function toFormData(obj, formData, options) {
   formData = formData || new (FormData__default["default"] || FormData)();
 
   // eslint-disable-next-line no-param-reassign
+<<<<<<< HEAD
   options = utils$1.toFlatObject(options, {
+=======
+  options = utils.toFlatObject(options, {
+>>>>>>> e275e68 (fix: generate and add dist file)
     metaTokens: true,
     dots: false,
     indexes: false
   }, false, function defined(option, source) {
     // eslint-disable-next-line no-eq-null,eqeqeq
+<<<<<<< HEAD
     return !utils$1.isUndefined(source[option]);
+=======
+    return !utils.isUndefined(source[option]);
+>>>>>>> e275e68 (fix: generate and add dist file)
   });
 
   const metaTokens = options.metaTokens;
@@ -33568,15 +35449,22 @@ function toFormData(obj, formData, options) {
   const dots = options.dots;
   const indexes = options.indexes;
   const _Blob = options.Blob || typeof Blob !== 'undefined' && Blob;
+<<<<<<< HEAD
   const useBlob = _Blob && utils$1.isSpecCompliantForm(formData);
 
   if (!utils$1.isFunction(visitor)) {
+=======
+  const useBlob = _Blob && utils.isSpecCompliantForm(formData);
+
+  if (!utils.isFunction(visitor)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
     throw new TypeError('visitor must be a function');
   }
 
   function convertValue(value) {
     if (value === null) return '';
 
+<<<<<<< HEAD
     if (utils$1.isDate(value)) {
       return value.toISOString();
     }
@@ -33586,6 +35474,17 @@ function toFormData(obj, formData, options) {
     }
 
     if (utils$1.isArrayBuffer(value) || utils$1.isTypedArray(value)) {
+=======
+    if (utils.isDate(value)) {
+      return value.toISOString();
+    }
+
+    if (!useBlob && utils.isBlob(value)) {
+      throw new AxiosError('Blob is not supported. Use a Buffer instead.');
+    }
+
+    if (utils.isArrayBuffer(value) || utils.isTypedArray(value)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       return useBlob && typeof Blob === 'function' ? new Blob([value]) : Buffer.from(value);
     }
 
@@ -33606,20 +35505,33 @@ function toFormData(obj, formData, options) {
     let arr = value;
 
     if (value && !path && typeof value === 'object') {
+<<<<<<< HEAD
       if (utils$1.endsWith(key, '{}')) {
+=======
+      if (utils.endsWith(key, '{}')) {
+>>>>>>> e275e68 (fix: generate and add dist file)
         // eslint-disable-next-line no-param-reassign
         key = metaTokens ? key : key.slice(0, -2);
         // eslint-disable-next-line no-param-reassign
         value = JSON.stringify(value);
       } else if (
+<<<<<<< HEAD
         (utils$1.isArray(value) && isFlatArray(value)) ||
         ((utils$1.isFileList(value) || utils$1.endsWith(key, '[]')) && (arr = utils$1.toArray(value))
+=======
+        (utils.isArray(value) && isFlatArray(value)) ||
+        ((utils.isFileList(value) || utils.endsWith(key, '[]')) && (arr = utils.toArray(value))
+>>>>>>> e275e68 (fix: generate and add dist file)
         )) {
         // eslint-disable-next-line no-param-reassign
         key = removeBrackets(key);
 
         arr.forEach(function each(el, index) {
+<<<<<<< HEAD
           !(utils$1.isUndefined(el) || el === null) && formData.append(
+=======
+          !(utils.isUndefined(el) || el === null) && formData.append(
+>>>>>>> e275e68 (fix: generate and add dist file)
             // eslint-disable-next-line no-nested-ternary
             indexes === true ? renderKey([key], index, dots) : (indexes === null ? key : key + '[]'),
             convertValue(el)
@@ -33647,7 +35559,11 @@ function toFormData(obj, formData, options) {
   });
 
   function build(value, path) {
+<<<<<<< HEAD
     if (utils$1.isUndefined(value)) return;
+=======
+    if (utils.isUndefined(value)) return;
+>>>>>>> e275e68 (fix: generate and add dist file)
 
     if (stack.indexOf(value) !== -1) {
       throw Error('Circular reference detected in ' + path.join('.'));
@@ -33655,9 +35571,15 @@ function toFormData(obj, formData, options) {
 
     stack.push(value);
 
+<<<<<<< HEAD
     utils$1.forEach(value, function each(el, key) {
       const result = !(utils$1.isUndefined(el) || el === null) && visitor.call(
         formData, el, utils$1.isString(key) ? key.trim() : key, path, exposedHelpers
+=======
+    utils.forEach(value, function each(el, key) {
+      const result = !(utils.isUndefined(el) || el === null) && visitor.call(
+        formData, el, utils.isString(key) ? key.trim() : key, path, exposedHelpers
+>>>>>>> e275e68 (fix: generate and add dist file)
       );
 
       if (result === true) {
@@ -33668,7 +35590,11 @@ function toFormData(obj, formData, options) {
     stack.pop();
   }
 
+<<<<<<< HEAD
   if (!utils$1.isObject(obj)) {
+=======
+  if (!utils.isObject(obj)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
     throw new TypeError('data must be an object');
   }
 
@@ -33772,7 +35698,11 @@ function buildURL(url, params, options) {
   if (serializeFn) {
     serializedParams = serializeFn(params, options);
   } else {
+<<<<<<< HEAD
     serializedParams = utils$1.isURLSearchParams(params) ?
+=======
+    serializedParams = utils.isURLSearchParams(params) ?
+>>>>>>> e275e68 (fix: generate and add dist file)
       params.toString() :
       new AxiosURLSearchParams(params, options).toString(_encode);
   }
@@ -33847,7 +35777,11 @@ class InterceptorManager {
    * @returns {void}
    */
   forEach(fn) {
+<<<<<<< HEAD
     utils$1.forEach(this.handlers, function forEachHandler(h) {
+=======
+    utils.forEach(this.handlers, function forEachHandler(h) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       if (h !== null) {
         fn(h);
       }
@@ -33865,7 +35799,11 @@ const transitionalDefaults = {
 
 const URLSearchParams = url__default["default"].URLSearchParams;
 
+<<<<<<< HEAD
 const platform$1 = {
+=======
+const platform = {
+>>>>>>> e275e68 (fix: generate and add dist file)
   isNode: true,
   classes: {
     URLSearchParams,
@@ -33875,6 +35813,7 @@ const platform$1 = {
   protocols: [ 'http', 'https', 'file', 'data' ]
 };
 
+<<<<<<< HEAD
 const hasBrowserEnv = typeof window !== 'undefined' && typeof document !== 'undefined';
 
 /**
@@ -33933,6 +35872,12 @@ function toURLEncodedForm(data, options) {
   return toFormData(data, new platform.classes.URLSearchParams(), Object.assign({
     visitor: function(value, key, path, helpers) {
       if (platform.isNode && utils$1.isBuffer(value)) {
+=======
+function toURLEncodedForm(data, options) {
+  return toFormData(data, new platform.classes.URLSearchParams(), Object.assign({
+    visitor: function(value, key, path, helpers) {
+      if (utils.isBuffer(value)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
         this.append(key, value.toString('base64'));
         return false;
       }
@@ -33954,7 +35899,11 @@ function parsePropPath(name) {
   // foo.x.y.z
   // foo-x-y-z
   // foo x y z
+<<<<<<< HEAD
   return utils$1.matchAll(/\w+|\[(\w*)]/g, name).map(match => {
+=======
+  return utils.matchAll(/\w+|\[(\w*)]/g, name).map(match => {
+>>>>>>> e275e68 (fix: generate and add dist file)
     return match[0] === '[]' ? '' : match[1] || match[0];
   });
 }
@@ -33989,6 +35938,7 @@ function arrayToObject(arr) {
 function formDataToJSON(formData) {
   function buildPath(path, value, target, index) {
     let name = path[index++];
+<<<<<<< HEAD
 
     if (name === '__proto__') return true;
 
@@ -33998,6 +35948,14 @@ function formDataToJSON(formData) {
 
     if (isLast) {
       if (utils$1.hasOwnProp(target, name)) {
+=======
+    const isNumericKey = Number.isFinite(+name);
+    const isLast = index >= path.length;
+    name = !name && utils.isArray(target) ? target.length : name;
+
+    if (isLast) {
+      if (utils.hasOwnProp(target, name)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
         target[name] = [target[name], value];
       } else {
         target[name] = value;
@@ -34006,23 +35964,38 @@ function formDataToJSON(formData) {
       return !isNumericKey;
     }
 
+<<<<<<< HEAD
     if (!target[name] || !utils$1.isObject(target[name])) {
+=======
+    if (!target[name] || !utils.isObject(target[name])) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       target[name] = [];
     }
 
     const result = buildPath(path, value, target[name], index);
 
+<<<<<<< HEAD
     if (result && utils$1.isArray(target[name])) {
+=======
+    if (result && utils.isArray(target[name])) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       target[name] = arrayToObject(target[name]);
     }
 
     return !isNumericKey;
   }
 
+<<<<<<< HEAD
   if (utils$1.isFormData(formData) && utils$1.isFunction(formData.entries)) {
     const obj = {};
 
     utils$1.forEachEntry(formData, (name, value) => {
+=======
+  if (utils.isFormData(formData) && utils.isFunction(formData.entries)) {
+    const obj = {};
+
+    utils.forEachEntry(formData, (name, value) => {
+>>>>>>> e275e68 (fix: generate and add dist file)
       buildPath(parsePropPath(name), value, obj, 0);
     });
 
@@ -34043,10 +36016,17 @@ function formDataToJSON(formData) {
  * @returns {string} A stringified version of the rawValue.
  */
 function stringifySafely(rawValue, parser, encoder) {
+<<<<<<< HEAD
   if (utils$1.isString(rawValue)) {
     try {
       (parser || JSON.parse)(rawValue);
       return utils$1.trim(rawValue);
+=======
+  if (utils.isString(rawValue)) {
+    try {
+      (parser || JSON.parse)(rawValue);
+      return utils.trim(rawValue);
+>>>>>>> e275e68 (fix: generate and add dist file)
     } catch (e) {
       if (e.name !== 'SyntaxError') {
         throw e;
@@ -34066,6 +36046,7 @@ const defaults = {
   transformRequest: [function transformRequest(data, headers) {
     const contentType = headers.getContentType() || '';
     const hasJSONContentType = contentType.indexOf('application/json') > -1;
+<<<<<<< HEAD
     const isObjectPayload = utils$1.isObject(data);
 
     if (isObjectPayload && utils$1.isHTMLForm(data)) {
@@ -34073,6 +36054,15 @@ const defaults = {
     }
 
     const isFormData = utils$1.isFormData(data);
+=======
+    const isObjectPayload = utils.isObject(data);
+
+    if (isObjectPayload && utils.isHTMLForm(data)) {
+      data = new FormData(data);
+    }
+
+    const isFormData = utils.isFormData(data);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
     if (isFormData) {
       if (!hasJSONContentType) {
@@ -34081,6 +36071,7 @@ const defaults = {
       return hasJSONContentType ? JSON.stringify(formDataToJSON(data)) : data;
     }
 
+<<<<<<< HEAD
     if (utils$1.isArrayBuffer(data) ||
       utils$1.isBuffer(data) ||
       utils$1.isStream(data) ||
@@ -34093,6 +36084,20 @@ const defaults = {
       return data.buffer;
     }
     if (utils$1.isURLSearchParams(data)) {
+=======
+    if (utils.isArrayBuffer(data) ||
+      utils.isBuffer(data) ||
+      utils.isStream(data) ||
+      utils.isFile(data) ||
+      utils.isBlob(data)
+    ) {
+      return data;
+    }
+    if (utils.isArrayBufferView(data)) {
+      return data.buffer;
+    }
+    if (utils.isURLSearchParams(data)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       headers.setContentType('application/x-www-form-urlencoded;charset=utf-8', false);
       return data.toString();
     }
@@ -34104,7 +36109,11 @@ const defaults = {
         return toURLEncodedForm(data, this.formSerializer).toString();
       }
 
+<<<<<<< HEAD
       if ((isFileList = utils$1.isFileList(data)) || contentType.indexOf('multipart/form-data') > -1) {
+=======
+      if ((isFileList = utils.isFileList(data)) || contentType.indexOf('multipart/form-data') > -1) {
+>>>>>>> e275e68 (fix: generate and add dist file)
         const _FormData = this.env && this.env.FormData;
 
         return toFormData(
@@ -34128,7 +36137,11 @@ const defaults = {
     const forcedJSONParsing = transitional && transitional.forcedJSONParsing;
     const JSONRequested = this.responseType === 'json';
 
+<<<<<<< HEAD
     if (data && utils$1.isString(data) && ((forcedJSONParsing && !this.responseType) || JSONRequested)) {
+=======
+    if (data && utils.isString(data) && ((forcedJSONParsing && !this.responseType) || JSONRequested)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       const silentJSONParsing = transitional && transitional.silentJSONParsing;
       const strictJSONParsing = !silentJSONParsing && JSONRequested;
 
@@ -34176,7 +36189,11 @@ const defaults = {
   }
 };
 
+<<<<<<< HEAD
 utils$1.forEach(['delete', 'get', 'head', 'post', 'put', 'patch'], (method) => {
+=======
+utils.forEach(['delete', 'get', 'head', 'post', 'put', 'patch'], (method) => {
+>>>>>>> e275e68 (fix: generate and add dist file)
   defaults.headers[method] = {};
 });
 
@@ -34184,7 +36201,11 @@ const defaults$1 = defaults;
 
 // RawAxiosHeaders whose duplicates are ignored by node
 // c.f. https://nodejs.org/api/http.html#http_message_headers
+<<<<<<< HEAD
 const ignoreDuplicateOf = utils$1.toObjectSet([
+=======
+const ignoreDuplicateOf = utils.toObjectSet([
+>>>>>>> e275e68 (fix: generate and add dist file)
   'age', 'authorization', 'content-length', 'content-type', 'etag',
   'expires', 'from', 'host', 'if-modified-since', 'if-unmodified-since',
   'last-modified', 'location', 'max-forwards', 'proxy-authorization',
@@ -34245,7 +36266,11 @@ function normalizeValue(value) {
     return value;
   }
 
+<<<<<<< HEAD
   return utils$1.isArray(value) ? value.map(normalizeValue) : String(value);
+=======
+  return utils.isArray(value) ? value.map(normalizeValue) : String(value);
+>>>>>>> e275e68 (fix: generate and add dist file)
 }
 
 function parseTokens(str) {
@@ -34263,7 +36288,11 @@ function parseTokens(str) {
 const isValidHeaderName = (str) => /^[-_a-zA-Z0-9^`|~,!#$%&'*+.]+$/.test(str.trim());
 
 function matchHeaderValue(context, value, header, filter, isHeaderNameFilter) {
+<<<<<<< HEAD
   if (utils$1.isFunction(filter)) {
+=======
+  if (utils.isFunction(filter)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
     return filter.call(this, value, header);
   }
 
@@ -34271,6 +36300,7 @@ function matchHeaderValue(context, value, header, filter, isHeaderNameFilter) {
     value = header;
   }
 
+<<<<<<< HEAD
   if (!utils$1.isString(value)) return;
 
   if (utils$1.isString(filter)) {
@@ -34278,6 +36308,15 @@ function matchHeaderValue(context, value, header, filter, isHeaderNameFilter) {
   }
 
   if (utils$1.isRegExp(filter)) {
+=======
+  if (!utils.isString(value)) return;
+
+  if (utils.isString(filter)) {
+    return value.indexOf(filter) !== -1;
+  }
+
+  if (utils.isRegExp(filter)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
     return filter.test(value);
   }
 }
@@ -34290,7 +36329,11 @@ function formatHeader(header) {
 }
 
 function buildAccessors(obj, header) {
+<<<<<<< HEAD
   const accessorName = utils$1.toCamelCase(' ' + header);
+=======
+  const accessorName = utils.toCamelCase(' ' + header);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
   ['get', 'set', 'has'].forEach(methodName => {
     Object.defineProperty(obj, methodName + accessorName, {
@@ -34317,7 +36360,11 @@ class AxiosHeaders {
         throw new Error('header name must be a non-empty string');
       }
 
+<<<<<<< HEAD
       const key = utils$1.findKey(self, lHeader);
+=======
+      const key = utils.findKey(self, lHeader);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
       if(!key || self[key] === undefined || _rewrite === true || (_rewrite === undefined && self[key] !== false)) {
         self[key || _header] = normalizeValue(_value);
@@ -34325,11 +36372,19 @@ class AxiosHeaders {
     }
 
     const setHeaders = (headers, _rewrite) =>
+<<<<<<< HEAD
       utils$1.forEach(headers, (_value, _header) => setHeader(_value, _header, _rewrite));
 
     if (utils$1.isPlainObject(header) || header instanceof this.constructor) {
       setHeaders(header, valueOrRewrite);
     } else if(utils$1.isString(header) && (header = header.trim()) && !isValidHeaderName(header)) {
+=======
+      utils.forEach(headers, (_value, _header) => setHeader(_value, _header, _rewrite));
+
+    if (utils.isPlainObject(header) || header instanceof this.constructor) {
+      setHeaders(header, valueOrRewrite);
+    } else if(utils.isString(header) && (header = header.trim()) && !isValidHeaderName(header)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       setHeaders(parseHeaders(header), valueOrRewrite);
     } else {
       header != null && setHeader(valueOrRewrite, header, rewrite);
@@ -34342,7 +36397,11 @@ class AxiosHeaders {
     header = normalizeHeader(header);
 
     if (header) {
+<<<<<<< HEAD
       const key = utils$1.findKey(this, header);
+=======
+      const key = utils.findKey(this, header);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
       if (key) {
         const value = this[key];
@@ -34355,11 +36414,19 @@ class AxiosHeaders {
           return parseTokens(value);
         }
 
+<<<<<<< HEAD
         if (utils$1.isFunction(parser)) {
           return parser.call(this, value, key);
         }
 
         if (utils$1.isRegExp(parser)) {
+=======
+        if (utils.isFunction(parser)) {
+          return parser.call(this, value, key);
+        }
+
+        if (utils.isRegExp(parser)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
           return parser.exec(value);
         }
 
@@ -34372,7 +36439,11 @@ class AxiosHeaders {
     header = normalizeHeader(header);
 
     if (header) {
+<<<<<<< HEAD
       const key = utils$1.findKey(this, header);
+=======
+      const key = utils.findKey(this, header);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
       return !!(key && this[key] !== undefined && (!matcher || matchHeaderValue(this, this[key], key, matcher)));
     }
@@ -34388,7 +36459,11 @@ class AxiosHeaders {
       _header = normalizeHeader(_header);
 
       if (_header) {
+<<<<<<< HEAD
         const key = utils$1.findKey(self, _header);
+=======
+        const key = utils.findKey(self, _header);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
         if (key && (!matcher || matchHeaderValue(self, self[key], key, matcher))) {
           delete self[key];
@@ -34398,7 +36473,11 @@ class AxiosHeaders {
       }
     }
 
+<<<<<<< HEAD
     if (utils$1.isArray(header)) {
+=======
+    if (utils.isArray(header)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       header.forEach(deleteHeader);
     } else {
       deleteHeader(header);
@@ -34427,8 +36506,13 @@ class AxiosHeaders {
     const self = this;
     const headers = {};
 
+<<<<<<< HEAD
     utils$1.forEach(this, (value, header) => {
       const key = utils$1.findKey(headers, header);
+=======
+    utils.forEach(this, (value, header) => {
+      const key = utils.findKey(headers, header);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
       if (key) {
         self[key] = normalizeValue(value);
@@ -34457,8 +36541,13 @@ class AxiosHeaders {
   toJSON(asStrings) {
     const obj = Object.create(null);
 
+<<<<<<< HEAD
     utils$1.forEach(this, (value, header) => {
       value != null && value !== false && (obj[header] = asStrings && utils$1.isArray(value) ? value.join(', ') : value);
+=======
+    utils.forEach(this, (value, header) => {
+      value != null && value !== false && (obj[header] = asStrings && utils.isArray(value) ? value.join(', ') : value);
+>>>>>>> e275e68 (fix: generate and add dist file)
     });
 
     return obj;
@@ -34505,7 +36594,11 @@ class AxiosHeaders {
       }
     }
 
+<<<<<<< HEAD
     utils$1.isArray(header) ? header.forEach(defineAccessor) : defineAccessor(header);
+=======
+    utils.isArray(header) ? header.forEach(defineAccessor) : defineAccessor(header);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
     return this;
   }
@@ -34514,7 +36607,11 @@ class AxiosHeaders {
 AxiosHeaders.accessor(['Content-Type', 'Content-Length', 'Accept', 'Accept-Encoding', 'User-Agent', 'Authorization']);
 
 // reserved names hotfix
+<<<<<<< HEAD
 utils$1.reduceDescriptors(AxiosHeaders.prototype, ({value}, key) => {
+=======
+utils.reduceDescriptors(AxiosHeaders.prototype, ({value}, key) => {
+>>>>>>> e275e68 (fix: generate and add dist file)
   let mapped = key[0].toUpperCase() + key.slice(1); // map `set` => `Set`
   return {
     get: () => value,
@@ -34524,7 +36621,11 @@ utils$1.reduceDescriptors(AxiosHeaders.prototype, ({value}, key) => {
   }
 });
 
+<<<<<<< HEAD
 utils$1.freezeMethods(AxiosHeaders);
+=======
+utils.freezeMethods(AxiosHeaders);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
 const AxiosHeaders$1 = AxiosHeaders;
 
@@ -34542,7 +36643,11 @@ function transformData(fns, response) {
   const headers = AxiosHeaders$1.from(context.headers);
   let data = context.data;
 
+<<<<<<< HEAD
   utils$1.forEach(fns, function transform(fn) {
+=======
+  utils.forEach(fns, function transform(fn) {
+>>>>>>> e275e68 (fix: generate and add dist file)
     data = fn.call(config, data, headers.normalize(), response ? response.status : undefined);
   });
 
@@ -34570,7 +36675,11 @@ function CanceledError(message, config, request) {
   this.name = 'CanceledError';
 }
 
+<<<<<<< HEAD
 utils$1.inherits(CanceledError, AxiosError, {
+=======
+utils.inherits(CanceledError, AxiosError, {
+>>>>>>> e275e68 (fix: generate and add dist file)
   __CANCEL__: true
 });
 
@@ -34622,7 +36731,11 @@ function isAbsoluteURL(url) {
  */
 function combineURLs(baseURL, relativeURL) {
   return relativeURL
+<<<<<<< HEAD
     ? baseURL.replace(/\/?\/$/, '') + '/' + relativeURL.replace(/^\/+/, '')
+=======
+    ? baseURL.replace(/\/+$/, '') + '/' + relativeURL.replace(/^\/+/, '')
+>>>>>>> e275e68 (fix: generate and add dist file)
     : baseURL;
 }
 
@@ -34643,7 +36756,11 @@ function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 }
 
+<<<<<<< HEAD
 const VERSION = "1.6.4";
+=======
+const VERSION = "1.6.0";
+>>>>>>> e275e68 (fix: generate and add dist file)
 
 function parseProtocol(url) {
   const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
@@ -34784,7 +36901,11 @@ const kInternals = Symbol('internals');
 
 class AxiosTransformStream extends stream__default["default"].Transform{
   constructor(options) {
+<<<<<<< HEAD
     options = utils$1.toFlatObject(options, {
+=======
+    options = utils.toFlatObject(options, {
+>>>>>>> e275e68 (fix: generate and add dist file)
       maxRate: 0,
       chunkSize: 64 * 1024,
       minChunkSize: 100,
@@ -34792,7 +36913,11 @@ class AxiosTransformStream extends stream__default["default"].Transform{
       ticksRate: 2,
       samplesCount: 15
     }, null, (prop, source) => {
+<<<<<<< HEAD
       return !utils$1.isUndefined(source[prop]);
+=======
+      return !utils.isUndefined(source[prop]);
+>>>>>>> e275e68 (fix: generate and add dist file)
     });
 
     super({
@@ -34981,7 +37106,11 @@ const readBlob = async function* (blob) {
 
 const readBlob$1 = readBlob;
 
+<<<<<<< HEAD
 const BOUNDARY_ALPHABET = utils$1.ALPHABET.ALPHA_DIGIT + '-_';
+=======
+const BOUNDARY_ALPHABET = utils.ALPHABET.ALPHA_DIGIT + '-_';
+>>>>>>> e275e68 (fix: generate and add dist file)
 
 const textEncoder = new util.TextEncoder();
 
@@ -34992,7 +37121,11 @@ const CRLF_BYTES_COUNT = 2;
 class FormDataPart {
   constructor(name, value) {
     const {escapeName} = this.constructor;
+<<<<<<< HEAD
     const isStringValue = utils$1.isString(value);
+=======
+    const isStringValue = utils.isString(value);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
     let headers = `Content-Disposition: form-data; name="${escapeName(name)}"${
       !isStringValue && value.name ? `; filename="${escapeName(value.name)}"` : ''
@@ -35019,7 +37152,11 @@ class FormDataPart {
 
     const {value} = this;
 
+<<<<<<< HEAD
     if(utils$1.isTypedArray(value)) {
+=======
+    if(utils.isTypedArray(value)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       yield value;
     } else {
       yield* readBlob$1(value);
@@ -35041,10 +37178,17 @@ const formDataToStream = (form, headersHandler, options) => {
   const {
     tag = 'form-data-boundary',
     size = 25,
+<<<<<<< HEAD
     boundary = tag + '-' + utils$1.generateString(size, BOUNDARY_ALPHABET)
   } = options || {};
 
   if(!utils$1.isFormData(form)) {
+=======
+    boundary = tag + '-' + utils.generateString(size, BOUNDARY_ALPHABET)
+  } = options || {};
+
+  if(!utils.isFormData(form)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
     throw TypeError('FormData instance required');
   }
 
@@ -35064,7 +37208,11 @@ const formDataToStream = (form, headersHandler, options) => {
 
   contentLength += boundaryBytes.byteLength * parts.length;
 
+<<<<<<< HEAD
   contentLength = utils$1.toFiniteNumber(contentLength);
+=======
+  contentLength = utils.toFiniteNumber(contentLength);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
   const computedHeaders = {
     'Content-Type': `multipart/form-data; boundary=${boundary}`
@@ -35114,7 +37262,11 @@ class ZlibHeaderTransformStream extends stream__default["default"].Transform {
 const ZlibHeaderTransformStream$1 = ZlibHeaderTransformStream;
 
 const callbackify = (fn, reducer) => {
+<<<<<<< HEAD
   return utils$1.isAsyncFn(fn) ? function (...args) {
+=======
+  return utils.isAsyncFn(fn) ? function (...args) {
+>>>>>>> e275e68 (fix: generate and add dist file)
     const cb = args.pop();
     fn.apply(this, args).then((value) => {
       try {
@@ -35138,7 +37290,11 @@ const brotliOptions = {
   finishFlush: zlib__default["default"].constants.BROTLI_OPERATION_FLUSH
 };
 
+<<<<<<< HEAD
 const isBrotliSupported = utils$1.isFunction(zlib__default["default"].createBrotliDecompress);
+=======
+const isBrotliSupported = utils.isFunction(zlib__default["default"].createBrotliDecompress);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
 const {http: httpFollow, https: httpsFollow} = followRedirects__default["default"];
 
@@ -35218,7 +37374,11 @@ function setProxy(options, configProxy, location) {
   };
 }
 
+<<<<<<< HEAD
 const isHttpAdapterSupported = typeof process !== 'undefined' && utils$1.kindOf(process) === 'process';
+=======
+const isHttpAdapterSupported = typeof process !== 'undefined' && utils.kindOf(process) === 'process';
+>>>>>>> e275e68 (fix: generate and add dist file)
 
 // temporary hotfix
 
@@ -35248,7 +37408,11 @@ const wrapAsync = (asyncExecutor) => {
 };
 
 const resolveFamily = ({address, family}) => {
+<<<<<<< HEAD
   if (!utils$1.isString(address)) {
+=======
+  if (!utils.isString(address)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
     throw TypeError('address must be a string');
   }
   return ({
@@ -35257,7 +37421,11 @@ const resolveFamily = ({address, family}) => {
   });
 };
 
+<<<<<<< HEAD
 const buildAddressEntry = (address, family) => resolveFamily(utils$1.isObject(address) ? address : {address, family});
+=======
+const buildAddressEntry = (address, family) => resolveFamily(utils.isObject(address) ? address : {address, family});
+>>>>>>> e275e68 (fix: generate and add dist file)
 
 /*eslint consistent-return:0*/
 const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
@@ -35270,11 +37438,19 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
     let req;
 
     if (lookup) {
+<<<<<<< HEAD
       const _lookup = callbackify$1(lookup, (value) => utils$1.isArray(value) ? value : [value]);
       // hotfix to support opt.all option which is required for node 20.x
       lookup = (hostname, opt, cb) => {
         _lookup(hostname, opt, (err, arg0, arg1) => {
           const addresses = utils$1.isArray(arg0) ? arg0.map(addr => buildAddressEntry(addr)) : [buildAddressEntry(arg0, arg1)];
+=======
+      const _lookup = callbackify$1(lookup, (value) => utils.isArray(value) ? value : [value]);
+      // hotfix to support opt.all option which is required for node 20.x
+      lookup = (hostname, opt, cb) => {
+        _lookup(hostname, opt, (err, arg0, arg1) => {
+          const addresses = utils.isArray(arg0) ? arg0.map(addr => buildAddressEntry(addr)) : [buildAddressEntry(arg0, arg1)];
+>>>>>>> e275e68 (fix: generate and add dist file)
 
           opt.all ? cb(err, addresses) : cb(err, addresses[0].address, addresses[0].family);
         });
@@ -35346,7 +37522,11 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
         convertedData = convertedData.toString(responseEncoding);
 
         if (!responseEncoding || responseEncoding === 'utf8') {
+<<<<<<< HEAD
           convertedData = utils$1.stripBOM(convertedData);
+=======
+          convertedData = utils.stripBOM(convertedData);
+>>>>>>> e275e68 (fix: generate and add dist file)
         }
       } else if (responseType === 'stream') {
         convertedData = stream__default["default"].Readable.from(convertedData);
@@ -35384,7 +37564,11 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
     let maxDownloadRate = undefined;
 
     // support for spec compliant FormData objects
+<<<<<<< HEAD
     if (utils$1.isSpecCompliantForm(data)) {
+=======
+    if (utils.isSpecCompliantForm(data)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       const userBoundary = headers.getContentType(/boundary=([-_\w\d]{10,70})/i);
 
       data = formDataToStream$1(data, (formHeaders) => {
@@ -35394,7 +37578,11 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
         boundary: userBoundary && userBoundary[1] || undefined
       });
       // support for https://www.npmjs.com/package/form-data api
+<<<<<<< HEAD
     } else if (utils$1.isFormData(data) && utils$1.isFunction(data.getHeaders)) {
+=======
+    } else if (utils.isFormData(data) && utils.isFunction(data.getHeaders)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       headers.set(data.getHeaders());
 
       if (!headers.hasContentLength()) {
@@ -35405,6 +37593,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
         } catch (e) {
         }
       }
+<<<<<<< HEAD
     } else if (utils$1.isBlob(data)) {
       data.size && headers.setContentType(data.type || 'application/octet-stream');
       headers.setContentLength(data.size || 0);
@@ -35413,6 +37602,16 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
       if (Buffer.isBuffer(data)) ; else if (utils$1.isArrayBuffer(data)) {
         data = Buffer.from(new Uint8Array(data));
       } else if (utils$1.isString(data)) {
+=======
+    } else if (utils.isBlob(data)) {
+      data.size && headers.setContentType(data.type || 'application/octet-stream');
+      headers.setContentLength(data.size || 0);
+      data = stream__default["default"].Readable.from(readBlob$1(data));
+    } else if (data && !utils.isStream(data)) {
+      if (Buffer.isBuffer(data)) ; else if (utils.isArrayBuffer(data)) {
+        data = Buffer.from(new Uint8Array(data));
+      } else if (utils.isString(data)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
         data = Buffer.from(data, 'utf-8');
       } else {
         return reject(new AxiosError(
@@ -35434,9 +37633,15 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
       }
     }
 
+<<<<<<< HEAD
     const contentLength = utils$1.toFiniteNumber(headers.getContentLength());
 
     if (utils$1.isArray(maxRate)) {
+=======
+    const contentLength = utils.toFiniteNumber(headers.getContentLength());
+
+    if (utils.isArray(maxRate)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       maxUploadRate = maxRate[0];
       maxDownloadRate = maxRate[1];
     } else {
@@ -35444,14 +37649,23 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
     }
 
     if (data && (onUploadProgress || maxUploadRate)) {
+<<<<<<< HEAD
       if (!utils$1.isStream(data)) {
+=======
+      if (!utils.isStream(data)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
         data = stream__default["default"].Readable.from(data, {objectMode: false});
       }
 
       data = stream__default["default"].pipeline([data, new AxiosTransformStream$1({
         length: contentLength,
+<<<<<<< HEAD
         maxRate: utils$1.toFiniteNumber(maxUploadRate)
       })], utils$1.noop);
+=======
+        maxRate: utils.toFiniteNumber(maxUploadRate)
+      })], utils.noop);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
       onUploadProgress && data.on('progress', progress => {
         onUploadProgress(Object.assign(progress, {
@@ -35510,7 +37724,11 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
     };
 
     // cacheable-lookup integration hotfix
+<<<<<<< HEAD
     !utils$1.isUndefined(lookup) && (options.lookup = lookup);
+=======
+    !utils.isUndefined(lookup) && (options.lookup = lookup);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
     if (config.socketPath) {
       options.socketPath = config.socketPath;
@@ -35558,8 +37776,13 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
 
       if (onDownloadProgress) {
         const transformStream = new AxiosTransformStream$1({
+<<<<<<< HEAD
           length: utils$1.toFiniteNumber(responseLength),
           maxRate: utils$1.toFiniteNumber(maxDownloadRate)
+=======
+          length: utils.toFiniteNumber(responseLength),
+          maxRate: utils.toFiniteNumber(maxDownloadRate)
+>>>>>>> e275e68 (fix: generate and add dist file)
         });
 
         onDownloadProgress && transformStream.on('progress', progress => {
@@ -35614,7 +37837,11 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
         }
       }
 
+<<<<<<< HEAD
       responseStream = streams.length > 1 ? stream__default["default"].pipeline(streams, utils$1.noop) : streams[0];
+=======
+      responseStream = streams.length > 1 ? stream__default["default"].pipeline(streams, utils.noop) : streams[0];
+>>>>>>> e275e68 (fix: generate and add dist file)
 
       const offListeners = stream__default["default"].finished(responseStream, () => {
         offListeners();
@@ -35676,7 +37903,11 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
             if (responseType !== 'arraybuffer') {
               responseData = responseData.toString(responseEncoding);
               if (!responseEncoding || responseEncoding === 'utf8') {
+<<<<<<< HEAD
                 responseData = utils$1.stripBOM(responseData);
+=======
+                responseData = utils.stripBOM(responseData);
+>>>>>>> e275e68 (fix: generate and add dist file)
               }
             }
             response.data = responseData;
@@ -35753,7 +37984,11 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
 
 
     // Send the request
+<<<<<<< HEAD
     if (utils$1.isStream(data)) {
+=======
+    if (utils.isStream(data)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       let ended = false;
       let errored = false;
 
@@ -35779,6 +38014,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
   });
 };
 
+<<<<<<< HEAD
 const cookies = platform.hasStandardBrowserEnv ?
 
   // Standard browser envs support document.cookie
@@ -35819,6 +38055,57 @@ const cookies = platform.hasStandardBrowserEnv ?
   };
 
 const isURLSameOrigin = platform.hasStandardBrowserEnv ?
+=======
+const cookies = platform.isStandardBrowserEnv ?
+
+// Standard browser envs support document.cookie
+  (function standardBrowserEnv() {
+    return {
+      write: function write(name, value, expires, path, domain, secure) {
+        const cookie = [];
+        cookie.push(name + '=' + encodeURIComponent(value));
+
+        if (utils.isNumber(expires)) {
+          cookie.push('expires=' + new Date(expires).toGMTString());
+        }
+
+        if (utils.isString(path)) {
+          cookie.push('path=' + path);
+        }
+
+        if (utils.isString(domain)) {
+          cookie.push('domain=' + domain);
+        }
+
+        if (secure === true) {
+          cookie.push('secure');
+        }
+
+        document.cookie = cookie.join('; ');
+      },
+
+      read: function read(name) {
+        const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+        return (match ? decodeURIComponent(match[3]) : null);
+      },
+
+      remove: function remove(name) {
+        this.write(name, '', Date.now() - 86400000);
+      }
+    };
+  })() :
+
+// Non standard browser env (web workers, react-native) lack needed support.
+  (function nonStandardBrowserEnv() {
+    return {
+      write: function write() {},
+      read: function read() { return null; },
+      remove: function remove() {}
+    };
+  })();
+
+const isURLSameOrigin = platform.isStandardBrowserEnv ?
+>>>>>>> e275e68 (fix: generate and add dist file)
 
 // Standard browser envs have full support of the APIs needed to test
 // whether the request URL is of the same origin as current location.
@@ -35828,7 +38115,11 @@ const isURLSameOrigin = platform.hasStandardBrowserEnv ?
     let originURL;
 
     /**
+<<<<<<< HEAD
     * Parse a URL to discover its components
+=======
+    * Parse a URL to discover it's components
+>>>>>>> e275e68 (fix: generate and add dist file)
     *
     * @param {String} url The URL to be parsed
     * @returns {Object}
@@ -35868,7 +38159,11 @@ const isURLSameOrigin = platform.hasStandardBrowserEnv ?
     * @returns {boolean} True if URL shares the same origin, otherwise false
     */
     return function isURLSameOrigin(requestURL) {
+<<<<<<< HEAD
       const parsed = (utils$1.isString(requestURL)) ? resolveURL(requestURL) : requestURL;
+=======
+      const parsed = (utils.isString(requestURL)) ? resolveURL(requestURL) : requestURL;
+>>>>>>> e275e68 (fix: generate and add dist file)
       return (parsed.protocol === originURL.protocol &&
           parsed.host === originURL.host);
     };
@@ -35916,7 +38211,11 @@ const xhrAdapter = isXHRAdapterSupported && function (config) {
   return new Promise(function dispatchXhrRequest(resolve, reject) {
     let requestData = config.data;
     const requestHeaders = AxiosHeaders$1.from(config.headers).normalize();
+<<<<<<< HEAD
     let {responseType, withXSRFToken} = config;
+=======
+    const responseType = config.responseType;
+>>>>>>> e275e68 (fix: generate and add dist file)
     let onCanceled;
     function done() {
       if (config.cancelToken) {
@@ -35930,6 +38229,7 @@ const xhrAdapter = isXHRAdapterSupported && function (config) {
 
     let contentType;
 
+<<<<<<< HEAD
     if (utils$1.isFormData(requestData)) {
       if (platform.hasStandardBrowserEnv || platform.hasStandardBrowserWebWorkerEnv) {
         requestHeaders.setContentType(false); // Let the browser set it
@@ -35937,6 +38237,16 @@ const xhrAdapter = isXHRAdapterSupported && function (config) {
         // fix semicolon duplication issue for ReactNative FormData implementation
         const [type, ...tokens] = contentType ? contentType.split(';').map(token => token.trim()).filter(Boolean) : [];
         requestHeaders.setContentType([type || 'multipart/form-data', ...tokens].join('; '));
+=======
+    if (utils.isFormData(requestData)) {
+      if (platform.isStandardBrowserEnv || platform.isStandardBrowserWebWorkerEnv) {
+        requestHeaders.setContentType(false); // Let the browser set it
+      } else if(!requestHeaders.getContentType(/^\s*multipart\/form-data/)){
+        requestHeaders.setContentType('multipart/form-data'); // mobile/desktop app frameworks
+      } else if(utils.isString(contentType = requestHeaders.getContentType())){
+        // fix semicolon duplication issue for ReactNative FormData implementation
+        requestHeaders.setContentType(contentType.replace(/^\s*(multipart\/form-data);+/, '$1'));
+>>>>>>> e275e68 (fix: generate and add dist file)
       }
     }
 
@@ -36052,6 +38362,7 @@ const xhrAdapter = isXHRAdapterSupported && function (config) {
     // Add xsrf header
     // This is only done if running in a standard browser environment.
     // Specifically not if we're in a web worker, or react-native.
+<<<<<<< HEAD
     if(platform.hasStandardBrowserEnv) {
       withXSRFToken && utils$1.isFunction(withXSRFToken) && (withXSRFToken = withXSRFToken(config));
 
@@ -36062,6 +38373,15 @@ const xhrAdapter = isXHRAdapterSupported && function (config) {
         if (xsrfValue) {
           requestHeaders.set(config.xsrfHeaderName, xsrfValue);
         }
+=======
+    if (platform.isStandardBrowserEnv) {
+      // Add xsrf header
+      // regarding CVE-2023-45857 config.withCredentials condition was removed temporarily
+      const xsrfValue = isURLSameOrigin(fullPath) && config.xsrfCookieName && cookies.read(config.xsrfCookieName);
+
+      if (xsrfValue) {
+        requestHeaders.set(config.xsrfHeaderName, xsrfValue);
+>>>>>>> e275e68 (fix: generate and add dist file)
       }
     }
 
@@ -36070,13 +38390,21 @@ const xhrAdapter = isXHRAdapterSupported && function (config) {
 
     // Add headers to the request
     if ('setRequestHeader' in request) {
+<<<<<<< HEAD
       utils$1.forEach(requestHeaders.toJSON(), function setRequestHeader(val, key) {
+=======
+      utils.forEach(requestHeaders.toJSON(), function setRequestHeader(val, key) {
+>>>>>>> e275e68 (fix: generate and add dist file)
         request.setRequestHeader(key, val);
       });
     }
 
     // Add withCredentials to request if needed
+<<<<<<< HEAD
     if (!utils$1.isUndefined(config.withCredentials)) {
+=======
+    if (!utils.isUndefined(config.withCredentials)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       request.withCredentials = !!config.withCredentials;
     }
 
@@ -36131,7 +38459,11 @@ const knownAdapters = {
   xhr: xhrAdapter
 };
 
+<<<<<<< HEAD
 utils$1.forEach(knownAdapters, (fn, value) => {
+=======
+utils.forEach(knownAdapters, (fn, value) => {
+>>>>>>> e275e68 (fix: generate and add dist file)
   if (fn) {
     try {
       Object.defineProperty(fn, 'name', {value});
@@ -36144,11 +38476,19 @@ utils$1.forEach(knownAdapters, (fn, value) => {
 
 const renderReason = (reason) => `- ${reason}`;
 
+<<<<<<< HEAD
 const isResolvedHandle = (adapter) => utils$1.isFunction(adapter) || adapter === null || adapter === false;
 
 const adapters = {
   getAdapter: (adapters) => {
     adapters = utils$1.isArray(adapters) ? adapters : [adapters];
+=======
+const isResolvedHandle = (adapter) => utils.isFunction(adapter) || adapter === null || adapter === false;
+
+const adapters = {
+  getAdapter: (adapters) => {
+    adapters = utils.isArray(adapters) ? adapters : [adapters];
+>>>>>>> e275e68 (fix: generate and add dist file)
 
     const {length} = adapters;
     let nameOrAdapter;
@@ -36289,11 +38629,19 @@ function mergeConfig(config1, config2) {
   const config = {};
 
   function getMergedValue(target, source, caseless) {
+<<<<<<< HEAD
     if (utils$1.isPlainObject(target) && utils$1.isPlainObject(source)) {
       return utils$1.merge.call({caseless}, target, source);
     } else if (utils$1.isPlainObject(source)) {
       return utils$1.merge({}, source);
     } else if (utils$1.isArray(source)) {
+=======
+    if (utils.isPlainObject(target) && utils.isPlainObject(source)) {
+      return utils.merge.call({caseless}, target, source);
+    } else if (utils.isPlainObject(source)) {
+      return utils.merge({}, source);
+    } else if (utils.isArray(source)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       return source.slice();
     }
     return source;
@@ -36301,25 +38649,41 @@ function mergeConfig(config1, config2) {
 
   // eslint-disable-next-line consistent-return
   function mergeDeepProperties(a, b, caseless) {
+<<<<<<< HEAD
     if (!utils$1.isUndefined(b)) {
       return getMergedValue(a, b, caseless);
     } else if (!utils$1.isUndefined(a)) {
+=======
+    if (!utils.isUndefined(b)) {
+      return getMergedValue(a, b, caseless);
+    } else if (!utils.isUndefined(a)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       return getMergedValue(undefined, a, caseless);
     }
   }
 
   // eslint-disable-next-line consistent-return
   function valueFromConfig2(a, b) {
+<<<<<<< HEAD
     if (!utils$1.isUndefined(b)) {
+=======
+    if (!utils.isUndefined(b)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       return getMergedValue(undefined, b);
     }
   }
 
   // eslint-disable-next-line consistent-return
   function defaultToConfig2(a, b) {
+<<<<<<< HEAD
     if (!utils$1.isUndefined(b)) {
       return getMergedValue(undefined, b);
     } else if (!utils$1.isUndefined(a)) {
+=======
+    if (!utils.isUndefined(b)) {
+      return getMergedValue(undefined, b);
+    } else if (!utils.isUndefined(a)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
       return getMergedValue(undefined, a);
     }
   }
@@ -36344,7 +38708,10 @@ function mergeConfig(config1, config2) {
     timeout: defaultToConfig2,
     timeoutMessage: defaultToConfig2,
     withCredentials: defaultToConfig2,
+<<<<<<< HEAD
     withXSRFToken: defaultToConfig2,
+=======
+>>>>>>> e275e68 (fix: generate and add dist file)
     adapter: defaultToConfig2,
     responseType: defaultToConfig2,
     xsrfCookieName: defaultToConfig2,
@@ -36365,10 +38732,17 @@ function mergeConfig(config1, config2) {
     headers: (a, b) => mergeDeepProperties(headersToObject(a), headersToObject(b), true)
   };
 
+<<<<<<< HEAD
   utils$1.forEach(Object.keys(Object.assign({}, config1, config2)), function computeConfigValue(prop) {
     const merge = mergeMap[prop] || mergeDeepProperties;
     const configValue = merge(config1[prop], config2[prop], prop);
     (utils$1.isUndefined(configValue) && merge !== mergeDirectKeys) || (config[prop] = configValue);
+=======
+  utils.forEach(Object.keys(Object.assign({}, config1, config2)), function computeConfigValue(prop) {
+    const merge = mergeMap[prop] || mergeDeepProperties;
+    const configValue = merge(config1[prop], config2[prop], prop);
+    (utils.isUndefined(configValue) && merge !== mergeDirectKeys) || (config[prop] = configValue);
+>>>>>>> e275e68 (fix: generate and add dist file)
   });
 
   return config;
@@ -36510,7 +38884,11 @@ class Axios {
     }
 
     if (paramsSerializer != null) {
+<<<<<<< HEAD
       if (utils$1.isFunction(paramsSerializer)) {
+=======
+      if (utils.isFunction(paramsSerializer)) {
+>>>>>>> e275e68 (fix: generate and add dist file)
         config.paramsSerializer = {
           serialize: paramsSerializer
         };
@@ -36526,12 +38904,20 @@ class Axios {
     config.method = (config.method || this.defaults.method || 'get').toLowerCase();
 
     // Flatten headers
+<<<<<<< HEAD
     let contextHeaders = headers && utils$1.merge(
+=======
+    let contextHeaders = headers && utils.merge(
+>>>>>>> e275e68 (fix: generate and add dist file)
       headers.common,
       headers[config.method]
     );
 
+<<<<<<< HEAD
     headers && utils$1.forEach(
+=======
+    headers && utils.forEach(
+>>>>>>> e275e68 (fix: generate and add dist file)
       ['delete', 'get', 'head', 'post', 'put', 'patch', 'common'],
       (method) => {
         delete headers[method];
@@ -36618,7 +39004,11 @@ class Axios {
 }
 
 // Provide aliases for supported request methods
+<<<<<<< HEAD
 utils$1.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoData(method) {
+=======
+utils.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoData(method) {
+>>>>>>> e275e68 (fix: generate and add dist file)
   /*eslint func-names:0*/
   Axios.prototype[method] = function(url, config) {
     return this.request(mergeConfig(config || {}, {
@@ -36629,7 +39019,11 @@ utils$1.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoDa
   };
 });
 
+<<<<<<< HEAD
 utils$1.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+=======
+utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+>>>>>>> e275e68 (fix: generate and add dist file)
   /*eslint func-names:0*/
 
   function generateHTTPMethod(isForm) {
@@ -36805,7 +39199,11 @@ function spread(callback) {
  * @returns {boolean} True if the payload is an error thrown by Axios, otherwise false
  */
 function isAxiosError(payload) {
+<<<<<<< HEAD
   return utils$1.isObject(payload) && (payload.isAxiosError === true);
+=======
+  return utils.isObject(payload) && (payload.isAxiosError === true);
+>>>>>>> e275e68 (fix: generate and add dist file)
 }
 
 const HttpStatusCode = {
@@ -36892,10 +39290,17 @@ function createInstance(defaultConfig) {
   const instance = bind(Axios$1.prototype.request, context);
 
   // Copy axios.prototype to instance
+<<<<<<< HEAD
   utils$1.extend(instance, Axios$1.prototype, context, {allOwnKeys: true});
 
   // Copy context to instance
   utils$1.extend(instance, context, null, {allOwnKeys: true});
+=======
+  utils.extend(instance, Axios$1.prototype, context, {allOwnKeys: true});
+
+  // Copy context to instance
+  utils.extend(instance, context, null, {allOwnKeys: true});
+>>>>>>> e275e68 (fix: generate and add dist file)
 
   // Factory for creating new instances
   instance.create = function create(instanceConfig) {
@@ -36939,7 +39344,11 @@ axios.mergeConfig = mergeConfig;
 
 axios.AxiosHeaders = AxiosHeaders$1;
 
+<<<<<<< HEAD
 axios.formToJSON = thing => formDataToJSON(utils$1.isHTMLForm(thing) ? new FormData(thing) : thing);
+=======
+axios.formToJSON = thing => formDataToJSON(utils.isHTMLForm(thing) ? new FormData(thing) : thing);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
 axios.getAdapter = adapters.getAdapter;
 
@@ -37014,6 +39423,7 @@ module.exports = JSON.parse('{"application/1d-interleaved-parityfec":{"source":"
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
+<<<<<<< HEAD
 const core = __nccwpck_require__(2186);
 const fs = __nccwpck_require__(7147);
 const isEqual = __nccwpck_require__(52);
@@ -37380,6 +39790,9 @@ async function testAndPublish() {
     await publishTransformation(transformationTest, librariesTest, commitId);
   }
 }
+=======
+const { testAndPublish } = __nccwpck_require__(1713);
+>>>>>>> e275e68 (fix: generate and add dist file)
 
 // Start the testing and publishing process.
 testAndPublish();
