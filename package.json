@@ -18,8 +18,5 @@
   },
   "devDependencies": {
     "@vercel/ncc": "^0.36.1"
-  },
-  "engines": {
-    "npm": "^9.6.7"
   }
 }
