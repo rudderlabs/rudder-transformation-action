@@ -1,25 +1,25 @@
-name: 'Rudder Transformation Action'
-description: 'Tests transformations and libraries from your repo and publishes them to your Rudderstack workspace'
+name: "Rudder Transformation Action"
+description: "Tests transformations and libraries from your repo and publishes them to your Rudderstack workspace"
 branding:
-    icon: activity
-    color: purple
+  icon: activity
+  color: purple
 inputs:
-    metaPath:
-        description: 'File containing metadata about transformation and libraries'
-        required: true
-    email:
-        description: 'Owner email of the workspace'
-        required: true
-    accessToken:
-        description: 'accessToken generated for a workspace'
-        required: true
-    serverEndpoint:
-        description: 'backend url'
-        required: false
-        default: 'https://api.rudderstack.com'
-    uploadTestArtifact:
-        description: 'Toggle for enabling artifacts'
-        required: false
+  metaPath:
+    description: "File containing metadata about transformation and libraries"
+    required: true
+  email:
+    description: "Owner email of the workspace"
+    required: true
+  accessToken:
+    description: "accessToken generated for a workspace"
+    required: true
+  serverEndpoint:
+    description: "backend url"
+    required: false
+    default: "https://api.rudderstack.com"
+  uploadTestArtifact:
+    description: "Toggle for enabling artifacts"
+    required: false
 runs:
-    using: 'node12'
-    main: 'dist/index.js'
+  using: "node20"
+  main: "dist/index.js"
