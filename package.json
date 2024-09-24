@@ -4,7 +4,7 @@
   "description": "This Github Action allows developers to test and publish user transformations and libraries directly from their development repository",
   "main": "src/index.js",
   "scripts": {
-    "test": "jest && codecov",
+    "test": "jest",
     "build": "ncc build --no-cache src/index.js  -o dist"
   },
   "author": "",
