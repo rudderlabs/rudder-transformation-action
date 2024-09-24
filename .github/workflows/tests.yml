@@ -1,12 +1,11 @@
 name: Main Branch PR Tests
 
 on:
-  pull_request:
+  push:
     branches:
       - main
-    types:
-      - opened
-      - synchronize
+      - "release/*"
+  pull_request:
 
 permissions: read-all
 
