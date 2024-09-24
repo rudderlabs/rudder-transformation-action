@@ -1,0 +1,26 @@
+{
+  "transformations": [
+    {
+      "file": "src/testdata/code.js",
+      "name": "Transformation_1",
+      "description": "Description_1",
+      "language": "javascript",
+      "test-input-file": "./src/testdata/events.json",
+      "expected-output": "./src/testdata/expected.json"
+    }
+  ],
+  "libraries": [
+    {
+      "file": "./src/testdata/lib_financeData.js",
+      "name": "getFinanceData",
+      "description": "javascript library to get finance data",
+      "language": "javascript"
+    },
+    {
+      "file": "./src/testdata/lib_userAddress.js",
+      "name": "getUserAddress",
+      "description": "javascript library to get user address",
+      "language": "javascript"
+    }
+  ]
+}

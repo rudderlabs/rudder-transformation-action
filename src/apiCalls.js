@@ -10,35 +10,40 @@ const listTransformationsEndpoint = `${serverEndpoint}/transformations`;
 const listLibrariesEndpoint = `${serverEndpoint}/libraries`;
 
 const defaultHeader = {
-  "user-agent": "transformationAction"
-}
+  "user-agent": "transformationAction",
+};
 
 async function getAllTransformations() {
+  core.info(`Getting all transformations from upstream`);
+
   return axios.default.get(listTransformationsEndpoint, {
     auth: {
       username: core.getInput("email"),
       password: core.getInput("accessToken"),
     },
     headers: {
-      ...defaultHeader
+      ...defaultHeader,
     },
   });
 }
 
 async function getAllLibraries() {
+  core.info(`Getting all libraries from upstream`);
+
   return axios.default.get(listLibrariesEndpoint, {
     auth: {
       username: core.getInput("email"),
       password: core.getInput("accessToken"),
     },
     headers: {
-      ...defaultHeader
+      ...defaultHeader,
     },
   });
 }
 
 async function createTransformation(name, description, code, language) {
-  core.info(`Created transformation: ${name}`);
+  core.info(`Creating transformation: ${name}`);
+
   return axios.default.post(
     `${createTransformerEndpoint}?publish=false`,
     {
@@ -53,14 +58,15 @@ async function createTransformation(name, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        ...defaultHeader
+        ...defaultHeader,
       },
-    }
+    },
   );
 }
 
 async function updateTransformation(id, name, description, code, language) {
-  core.info(`Updated transformation: ${name}`);
+  core.info(`Updating transformation: ${name}`);
+
   return axios.default.post(
     `${createTransformerEndpoint}/${id}?publish=false`,
     {
@@ -74,13 +80,15 @@ async function updateTransformation(id, name, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        ...defaultHeader
+        ...defaultHeader,
       },
-    }
+    },
   );
 }
 
 async function createLibrary(name, description, code, language) {
+  core.info(`Creating library: ${name}`);
+
   return axios.default.post(
     `${createLibraryEndpoint}?publish=false`,
     {
@@ -95,13 +103,15 @@ async function createLibrary(name, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        ...defaultHeader
+        ...defaultHeader,
       },
-    }
+    },
   );
 }
 
 async function updateLibrary(id, description, code, language) {
+  core.info(`Updating library: ${id}`);
+
   return axios.default.post(
     `${createLibraryEndpoint}/${id}?publish=false`,
     {
@@ -115,13 +125,15 @@ async function updateLibrary(id, description, code, language) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        ...defaultHeader
+        ...defaultHeader,
       },
-    }
+    },
   );
 }
 
 async function testTransformationAndLibrary(transformations, libraries) {
+  core.info("Testing transformations and libraries");
+
   return axios.default.post(
     `${testEndpoint}`,
     {
@@ -134,13 +146,15 @@ async function testTransformationAndLibrary(transformations, libraries) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        ...defaultHeader
+        ...defaultHeader,
       },
-    }
+    },
   );
 }
 
 async function publish(transformations, libraries, commitId) {
+  core.info("Publishing transformations and libraries");
+
   return axios.default.post(
     `${publishEndpoint}`,
     {
@@ -154,9 +168,9 @@ async function publish(transformations, libraries, commitId) {
         password: core.getInput("accessToken"),
       },
       headers: {
-        ...defaultHeader
+        ...defaultHeader,
       },
-    }
+    },
   );
 }
 
