@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/rudderlabs/rudder-transformation-action/compare/v1.1.1...v1.1.2) (2024-09-24)
+
+
+### Bug Fixes
+
+* add testing code to the transformation action ([#29](https://github.com/rudderlabs/rudder-transformation-action/issues/29)) ([12fc9a5](https://github.com/rudderlabs/rudder-transformation-action/commit/12fc9a56553e3515252084b1bcabd432e294812b))
+
 ## [1.1.1](https://github.com/rudderlabs/rudder-transformation-action/compare/1.1.0...v1.1.1) (2024-09-23)
 
 
