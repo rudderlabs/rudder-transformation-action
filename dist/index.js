@@ -33290,7 +33290,7 @@ async function updateTransformation(id, name, description, code, language) {
   );
 }
 
-async function createLibrary(name, description, code, language) {
+async function createLibrary(name, description, code, language, importName) {
   core.info(`Creating library: ${name}`);
 
   return axios.default.post(
@@ -33300,6 +33300,7 @@ async function createLibrary(name, description, code, language) {
       description,
       code,
       language,
+      importName,
     },
     {
       auth: {
@@ -33514,7 +33515,7 @@ async function upsertLibraries(libraries, libraryNameToId) {
     } else {
       // create a new library
       core.info(`Creating library: ${lib.name}`);
-      res = await createLibrary(lib.name, lib.description, code, lib.language);
+      res = await createLibrary(lib.name, lib.description, code, lib.language, lib.importName);
     }
     libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
   }

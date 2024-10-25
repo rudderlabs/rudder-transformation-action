@@ -117,7 +117,7 @@ async function upsertLibraries(libraries, libraryNameToId) {
     } else {
       // create a new library
       core.info(`Creating library: ${lib.name}`);
-      res = await createLibrary(lib.name, lib.description, code, lib.language);
+      res = await createLibrary(lib.name, lib.description, code, lib.language, lib.importName);
     }
     libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
   }

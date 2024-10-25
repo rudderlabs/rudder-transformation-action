@@ -86,7 +86,7 @@ async function updateTransformation(id, name, description, code, language) {
   );
 }
 
-async function createLibrary(name, description, code, language) {
+async function createLibrary(name, description, code, language, importName, importName) {
   core.info(`Creating library: ${name}`);
 
   return axios.default.post(
@@ -96,6 +96,7 @@ async function createLibrary(name, description, code, language) {
       description,
       code,
       language,
+      importName,
     },
     {
       auth: {
