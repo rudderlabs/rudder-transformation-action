@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.4-beta](https://github.com/rudderlabs/rudder-transformation-action/compare/v1.1.3-beta...v1.1.4-beta) (2025-02-06)
+
+
+### Bug Fixes
+
+* the response structure check of the upload artifact ([#42](https://github.com/rudderlabs/rudder-transformation-action/issues/42)) ([32f20d8](https://github.com/rudderlabs/rudder-transformation-action/commit/32f20d8913819acd16043a83bcb1593fcc197a60))
+
 ## [1.1.2](https://github.com/rudderlabs/rudder-transformation-action/compare/v1.1.1...v1.1.2) (2024-09-24)
 
 
