@@ -1,9 +1,8 @@
 const core = require("@actions/core");
 const fs = require("fs");
 const isEqual = require("lodash/isEqual");
-const artifact = require("@actions/artifact");
+const {DefaultArtifactClient}= require("@actions/artifact");
 const { detailedDiff } = require("deep-object-diff");
-const artifactClient = artifact.create();
 const _ = require("lodash");
 const {
   getAllTransformations,
@@ -23,6 +22,7 @@ const metaFilePath = core.getInput("metaPath");
 
 const testOnly = process.env.TEST_ONLY !== "false";
 const commitId = process.env.GITHUB_SHA || "";
+const artifactClient = new DefaultArtifactClient();
 
 // Load transformations and libraries from a local meta file.
 function getTransformationsAndLibrariesFromLocal(fpath) {
