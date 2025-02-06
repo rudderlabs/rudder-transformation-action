@@ -256,18 +256,13 @@ async function uploadTestArtifacts(testOutputFiles) {
   core.info(`Uploading test artifacts`);
   // upload artifact
 
-  core.info("Uploading test api output");
   const artifactClientResponse = await artifactClient.uploadArtifact(
     "transformer-test-results",
     testOutputFiles,
     ".",
   );
 
-  if (artifactClientResponse.failedItems.length > 0) {
-    throw new Error(
-      `Artifacts upload failed, items: ${JSON.stringify(failedItems)}`,
-    );
-  }
+  core.info(`Test artifact uploaded with id: ${artifactClientResponse.id}`);
 }
 
 // Publish the transformations and libraries.
