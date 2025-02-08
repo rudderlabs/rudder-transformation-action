@@ -26,7 +26,6 @@ jest.mock("./apiCalls", () => ({
 jest.mock("@actions/core", () => {
   const coreMock = {
     info: jest.fn(),
-    warn: jest.fn(),
     getInput: jest.fn(),
   };
   return coreMock;
