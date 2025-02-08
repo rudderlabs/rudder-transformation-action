@@ -194,9 +194,6 @@ async function compareOutput(successResults, transformationDict) {
       fs.mkdirSync(testOutputDir);
     }
     if (!transformationDict.hasOwnProperty(transformerVersionID)) {
-      core.warning(
-        `Transformer with version id: ${transformerVersionID} not found.`,
-      );
       continue;
     }
 
