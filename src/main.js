@@ -86,7 +86,6 @@ async function upsertTransformations(transformations, transformationNameToId) {
         tr.language,
       );
     } else {
-      core.info(`Creating transformation: ${tr.name}`);
       // create new transformer
       res = await createTransformation(
         tr.name,
@@ -193,6 +192,7 @@ async function compareOutput(successResults, transformationDict) {
     if (!fs.existsSync(testOutputDir)) {
       fs.mkdirSync(testOutputDir);
     }
+
     if (!transformationDict.hasOwnProperty(transformerVersionID)) {
       continue;
     }
