@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.4](https://github.com/rudderlabs/rudder-transformation-action/compare/v1.1.3...v1.1.4) (2025-02-10)
+
+
+### Bug Fixes
+
+* remove the erroneous warn function ([#44](https://github.com/rudderlabs/rudder-transformation-action/issues/44)) ([b4763ec](https://github.com/rudderlabs/rudder-transformation-action/commit/b4763ec88171784106abb1cac42131ebc57c56c8))
+
 ## [1.1.3](https://github.com/rudderlabs/rudder-transformation-action/compare/v1.1.2...v1.1.3) (2025-02-06)
 
 
