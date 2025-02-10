@@ -26,7 +26,6 @@ jest.mock("./apiCalls", () => ({
 jest.mock("@actions/core", () => {
   const coreMock = {
     info: jest.fn(),
-    warn: jest.fn(),
     getInput: jest.fn(),
   };
   return coreMock;
@@ -266,4 +265,155 @@ describe("test and publish transformation and libraries successfully", () => {
       readFile("./src/testdata/expected.json"),
     ); // actual file generated is as expected
   });
+
+  it("should throw an error in case testing the transformations / libraries fails", async() => {
+    const metapath = "./src/testdata/meta.json";
+
+    getAllTransformations.mockResolvedValue({
+      data: {
+        transformations: [
+          { name: "Transformation_1", id: "transformation_id_1" },
+        ],
+      },
+    });
+
+    getAllLibraries.mockResolvedValue({
+      data: {
+        libraries: [
+          { name: "getFinanceData", id: "library_id_1" },
+          { name: "getUserAddress", id: "library_id_2" },
+        ],
+      },
+    });
+
+    updateTransformation.mockResolvedValue({
+      data: {
+        id: "transformation_id_1",
+        versionId: "transformation_version_id_1",
+      },
+    });
+
+    updateLibrary
+    .mockReturnValueOnce({
+      data: {
+        id: "library_id_1",
+        versionId: "library_version_id_1",
+      },
+    })
+    .mockReturnValueOnce({
+      data: {
+        id: "library_id_2",
+        versionId: "library_version_id_2",
+      },
+    });
+
+    testTransformationAndLibrary.mockResolvedValue({
+      data: {
+        result: {
+          successTestResults: [
+          ],
+          failedTestResults: [
+            {
+              id : "transformation-id",
+              name: "some-upstream-transformation",
+              error: '{"success": false, "error": "some error message"}',
+            }
+          ],
+        },
+      },
+    });
+
+    await expect(testAndPublish(metapath)).rejects.toThrow(
+      "Failures occured while running tests against input events",
+    );
+  });
+
+  it ("should handle case when library is connected to transformations not managed within the workflow", async() => {
+    const metapath = "./src/testdata/meta.json";
+
+    getAllTransformations.mockResolvedValue({
+      data: {
+        transformations: [
+          { name: "Transformation_1", id: "transformation_id_1" },
+        ],
+      },
+    });
+
+    getAllLibraries.mockResolvedValue({
+      data: {
+        libraries: [
+          { name: "getFinanceData", id: "library_id_1" },
+          { name: "getUserAddress", id: "library_id_2" },
+        ],
+      },
+    });
+
+    updateTransformation.mockResolvedValue({
+      data: {
+        id: "transformation_id_1",
+        versionId: "transformation_version_id_1",
+      },
+    });
+
+    updateLibrary
+      .mockReturnValueOnce({
+        data: {
+          id: "library_id_1",
+          versionId: "library_version_id_1",
+        },
+      })
+      .mockReturnValueOnce({
+        data: {
+          id: "library_id_2",
+          versionId: "library_version_id_2",
+        },
+      });
+
+      testTransformationAndLibrary.mockResolvedValue({
+        data: {
+          result: {
+            successTestResults: [
+              {
+                transformerVersionID: "transformation_version_id_1",
+                result: {
+                  output: {
+                    transformedEvents: [
+                      {
+                        revenue: 0,
+                        price: 0,
+                        profit: 0,
+                        city: "Kolkata",
+                        country: "India",
+                        street: "330/8",
+                      },
+                      {
+                        revenue: 15,
+                        price: 20,
+                        profit: 5,
+                        city: "no data found",
+                        country: "no data found",
+                        street: "no data found",
+                      },
+                    ],
+                  },
+                },
+              },
+              {
+                transformerVersionID: "other_connection_transformation_version_id",
+                result: {
+                  output: {
+                    transformedEvents: [{}],
+                  },
+                },
+              },
+            ],
+            failedTestResults: [],
+          },
+        },
+      });
+
+      await expect(testAndPublish(metapath)).resolves.toEqual(undefined);
+    
+  });
+
 });
