@@ -1,3 +1,5 @@
+const fs = require("fs");
+
 const {
   getAllTransformations,
   getAllLibraries,
@@ -8,9 +10,6 @@ const {
   updateLibrary,
 } = require("./apiCalls");
 const { testAndPublish } = require("./main");
-
-const fs = require("fs");
-const path = require("path");
 
 jest.mock("./apiCalls", () => ({
   getAllTransformations: jest.fn(),
@@ -266,7 +265,7 @@ describe("test and publish transformation and libraries successfully", () => {
     ); // actual file generated is as expected
   });
 
-  it("should throw an error in case testing the transformations / libraries fails", async() => {
+  it("should throw an error in case testing the transformations / libraries fails", async () => {
     const metapath = "./src/testdata/meta.json";
 
     getAllTransformations.mockResolvedValue({
@@ -293,14 +292,12 @@ describe("test and publish transformation and libraries successfully", () => {
       },
     });
 
-    updateLibrary
-    .mockReturnValueOnce({
+    updateLibrary.mockReturnValueOnce({
       data: {
         id: "library_id_1",
         versionId: "library_version_id_1",
       },
-    })
-    .mockReturnValueOnce({
+    }).mockReturnValueOnce({
       data: {
         id: "library_id_2",
         versionId: "library_version_id_2",
@@ -314,10 +311,10 @@ describe("test and publish transformation and libraries successfully", () => {
           ],
           failedTestResults: [
             {
-              id : "transformation-id",
+              id: "transformation-id",
               name: "some-upstream-transformation",
-              error: '{"success": false, "error": "some error message"}',
-            }
+              error: "{\"success\": false, \"error\": \"some error message\"}",
+            },
           ],
         },
       },
@@ -328,7 +325,7 @@ describe("test and publish transformation and libraries successfully", () => {
     );
   });
 
-  it ("should handle case when library is connected to transformations not managed within the workflow", async() => {
+  it("should handle case when library is connected to transformations not managed within the workflow", async () => {
     const metapath = "./src/testdata/meta.json";
 
     getAllTransformations.mockResolvedValue({
@@ -369,51 +366,49 @@ describe("test and publish transformation and libraries successfully", () => {
         },
       });
 
-      testTransformationAndLibrary.mockResolvedValue({
-        data: {
-          result: {
-            successTestResults: [
-              {
-                transformerVersionID: "transformation_version_id_1",
-                result: {
-                  output: {
-                    transformedEvents: [
-                      {
-                        revenue: 0,
-                        price: 0,
-                        profit: 0,
-                        city: "Kolkata",
-                        country: "India",
-                        street: "330/8",
-                      },
-                      {
-                        revenue: 15,
-                        price: 20,
-                        profit: 5,
-                        city: "no data found",
-                        country: "no data found",
-                        street: "no data found",
-                      },
-                    ],
-                  },
+    testTransformationAndLibrary.mockResolvedValue({
+      data: {
+        result: {
+          successTestResults: [
+            {
+              transformerVersionID: "transformation_version_id_1",
+              result: {
+                output: {
+                  transformedEvents: [
+                    {
+                      revenue: 0,
+                      price: 0,
+                      profit: 0,
+                      city: "Kolkata",
+                      country: "India",
+                      street: "330/8",
+                    },
+                    {
+                      revenue: 15,
+                      price: 20,
+                      profit: 5,
+                      city: "no data found",
+                      country: "no data found",
+                      street: "no data found",
+                    },
+                  ],
                 },
               },
-              {
-                transformerVersionID: "other_connection_transformation_version_id",
-                result: {
-                  output: {
-                    transformedEvents: [{}],
-                  },
+            },
+            {
+              transformerVersionID: "other_connection_transformation_version_id",
+              result: {
+                output: {
+                  transformedEvents: [{}],
                 },
               },
-            ],
-            failedTestResults: [],
-          },
+            },
+          ],
+          failedTestResults: [],
         },
-      });
+      },
+    });
 
-      await expect(testAndPublish(metapath)).resolves.toEqual(undefined);
-    
+    await expect(testAndPublish(metapath)).resolves.toEqual(undefined);
   });
-
 });

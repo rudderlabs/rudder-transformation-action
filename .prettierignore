@@ -1,0 +1,5 @@
+node_modules/
+src/testdata
+dist/index.js
+commitlint.config.js
+.eslintrc.js

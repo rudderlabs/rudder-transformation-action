@@ -1,7 +1,8 @@
 const axios = require("axios");
+
 const core = require("@actions/core");
-const serverEndpoint =
-  core.getInput("serverEndpoint") || "https://api.rudderstack.com";
+
+const serverEndpoint = core.getInput("serverEndpoint") || "https://api.rudderstack.com";
 const createTransformerEndpoint = `${serverEndpoint}/transformations`;
 const createLibraryEndpoint = `${serverEndpoint}/libraries`;
 const testEndpoint = `${serverEndpoint}/transformations/libraries/test`;
@@ -14,7 +15,7 @@ const defaultHeader = {
 };
 
 async function getAllTransformations() {
-  core.info(`Getting all transformations from upstream`);
+  core.info("Getting all transformations from upstream");
 
   return axios.default.get(listTransformationsEndpoint, {
     auth: {
@@ -28,7 +29,7 @@ async function getAllTransformations() {
 }
 
 async function getAllLibraries() {
-  core.info(`Getting all libraries from upstream`);
+  core.info("Getting all libraries from upstream");
 
   return axios.default.get(listLibrariesEndpoint, {
     auth: {
