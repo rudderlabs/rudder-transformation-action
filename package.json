@@ -7,7 +7,8 @@
     "test": "jest",
     "build": "ncc build --no-cache src/index.js  -o dist",
     "lint": "eslint . --ext .js",
-    "prettier": "prettier --check '**/*.js'"
+    "prettier": "prettier --check '**/*.js'",
+    "prettier-fix": "prettier --check '**/*.js' --write"
   },
   "author": "",
   "license": "ISC",
@@ -28,6 +29,7 @@
     "@vercel/ncc": "^0.36.1",
     "eslint": "^8.57.1",
     "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^4.6.2",

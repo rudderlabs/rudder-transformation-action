@@ -1,5 +1,15 @@
 node_modules/
 src/testdata
-dist/index.js
 commitlint.config.js
 .eslintrc.js
+CHANGELOG.md
+*.html
+.husky/
+.prettierignore
+.npmrc
+dist/
+scripts/**
+*__tmpl__
+.npmignore
+.npmrc
+.gitignore

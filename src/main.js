@@ -16,7 +16,8 @@ const {
 } = require("./apiCalls");
 
 const testOutputDir = "./test-outputs";
-const uploadTestArtifact = core.getInput("uploadTestArtifact")?.toLowerCase() === "true";
+const uploadTestArtifact =
+  core.getInput("uploadTestArtifact")?.toLowerCase() === "true";
 const metaFilePath = core.getInput("metaPath");
 
 const testOnly = process.env.TEST_ONLY !== "false";
@@ -116,10 +117,21 @@ async function upsertTransformations(transformations, transformationNameToId) {
     if (transformationNameToId[tr.name]) {
       // update existing transformer and get a new versionId
       const id = transformationNameToId[tr.name];
-      res = await updateTransformation(id, tr.name, tr.description, code, tr.language);
+      res = await updateTransformation(
+        id,
+        tr.name,
+        tr.description,
+        code,
+        tr.language,
+      );
     } else {
       // create new transformer
-      res = await createTransformation(tr.name, tr.description, code, tr.language);
+      res = await createTransformation(
+        tr.name,
+        tr.description,
+        code,
+        tr.language,
+      );
     }
     transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
   }
@@ -158,8 +170,11 @@ async function buildTestSuite(transformationDict, libraryDict) {
   const librariesTest = [];
 
   for (const trVersionId of Object.keys(transformationDict)) {
-    const testInputPath = transformationDict[trVersionId]["test-input-file"] || "";
-    const testInput = testInputPath ? JSON.parse(fs.readFileSync(testInputPath)) : "";
+    const testInputPath =
+      transformationDict[trVersionId]["test-input-file"] || "";
+    const testInput = testInputPath
+      ? JSON.parse(fs.readFileSync(testInputPath))
+      : "";
     if (testInput) {
       transformationTest.push({ versionId: trVersionId, testInput });
     } else {
@@ -178,7 +193,9 @@ async function buildTestSuite(transformationDict, libraryDict) {
     `Final transformation versions to be tested:
     ${JSON.stringify(transformationTest)}`,
   );
-  core.info(`Final library versions to be tested: ${JSON.stringify(librariesTest)}`);
+  core.info(
+    `Final library versions to be tested: ${JSON.stringify(librariesTest)}`,
+  );
   return { transformationTest, librariesTest };
 }
 
@@ -186,12 +203,17 @@ async function buildTestSuite(transformationDict, libraryDict) {
 async function runTestSuite(transformationTest, librariesTest) {
   core.info("Running test suite for transformations and libraries");
 
-  const res = await testTransformationAndLibrary(transformationTest, librariesTest);
+  const res = await testTransformationAndLibrary(
+    transformationTest,
+    librariesTest,
+  );
 
   logResult(res.data.result);
 
   if (res.data.result.failedTestResults.length > 0) {
-    throw new Error("Failures occured while running tests against input events");
+    throw new Error(
+      "Failures occured while running tests against input events",
+    );
   }
 
   return res;
@@ -210,7 +232,12 @@ async function compareOutput(successResults, transformationDict) {
       fs.mkdirSync(testOutputDir);
     }
 
-    if (!Object.prototype.hasOwnProperty.call(transformationDict, transformerVersionID)) {
+    if (
+      !Object.prototype.hasOwnProperty.call(
+        transformationDict,
+        transformerVersionID,
+      )
+    ) {
       continue;
     }
 
@@ -222,7 +249,9 @@ async function compareOutput(successResults, transformationDict) {
       `${testOutputDir}/${transformationHandleName}_output.json`,
       JSON.stringify(actualOutput, null, 2),
     );
-    testOutputFiles.push(`${testOutputDir}/${transformationHandleName}_output.json`);
+    testOutputFiles.push(
+      `${testOutputDir}/${transformationHandleName}_output.json`,
+    );
 
     if (
       !Object.prototype.hasOwnProperty.call(
@@ -233,15 +262,20 @@ async function compareOutput(successResults, transformationDict) {
       continue;
     }
 
-    const expectedOutputfile = transformationDict[transformerVersionID]["expected-output"];
-    const expectedOutput = expectedOutputfile ? JSON.parse(fs.readFileSync(expectedOutputfile)) : "";
+    const expectedOutputfile =
+      transformationDict[transformerVersionID]["expected-output"];
+    const expectedOutput = expectedOutputfile
+      ? JSON.parse(fs.readFileSync(expectedOutputfile))
+      : "";
 
     if (expectedOutput === "") {
       continue;
     }
 
     if (!isEqual(expectedOutput, actualOutput)) {
-      core.info(`Test output do not match for transformation: ${transformationName}`);
+      core.info(
+        `Test output do not match for transformation: ${transformationName}`,
+      );
       outputMismatchResults.push(
         `Test output do not match for transformation: ${transformationName}`,
       );
@@ -251,7 +285,9 @@ async function compareOutput(successResults, transformationDict) {
         JSON.stringify(detailedDiff(expectedOutput, actualOutput), null, 2),
       );
 
-      testOutputFiles.push(`${testOutputDir}/${transformationHandleName}_diff.json`);
+      testOutputFiles.push(
+        `${testOutputDir}/${transformationHandleName}_diff.json`,
+      );
     }
   }
   return { outputMismatchResults, testOutputFiles };
@@ -272,22 +308,33 @@ async function uploadTestArtifacts(testOutputFiles) {
 }
 
 // Publish the transformations and libraries.
-async function publishTransformation(transformationTest, librariesTest, commitIdentifier) {
+async function publishTransformation(
+  transformationTest,
+  librariesTest,
+  commitIdentifier,
+) {
   core.info("Publishing transformations and libraries");
   // publish
   await publish(transformationTest, librariesTest, commitIdentifier);
 }
 
 async function testAndPublish(path = metaFilePath) {
-  core.info("Starting with test and publish of the transformations and libraries");
+  core.info(
+    "Starting with test and publish of the transformations and libraries",
+  );
 
-  const { transformations, libraries } = getTransformationsAndLibrariesFromLocal(path);
-  const { workspaceTransformations, workspaceLibraries } = await loadTransformationsAndLibraries();
+  const { transformations, libraries } =
+    getTransformationsAndLibrariesFromLocal(path);
+  const { workspaceTransformations, workspaceLibraries } =
+    await loadTransformationsAndLibraries();
 
   const transformationNameToId = buildNameToIdMap(workspaceTransformations);
   const libraryNameToId = buildNameToIdMap(workspaceLibraries);
 
-  const transformationDict = await upsertTransformations(transformations, transformationNameToId);
+  const transformationDict = await upsertTransformations(
+    transformations,
+    transformationNameToId,
+  );
 
   const libraryDict = await upsertLibraries(libraries, libraryNameToId);
 
@@ -296,7 +343,9 @@ async function testAndPublish(path = metaFilePath) {
     libraryDict,
   );
 
-  const testSuiteResult = (await runTestSuite(transformationTest, librariesTest)).data.result;
+  const testSuiteResult = (
+    await runTestSuite(transformationTest, librariesTest)
+  ).data.result;
 
   const { outputMismatchResults, testOutputFiles } = await compareOutput(
     testSuiteResult.successTestResults,

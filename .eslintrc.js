@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ["airbnb", "eslint:recommended"],
+  extends: ["airbnb", "prettier"],
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: "module",
@@ -10,8 +10,6 @@ module.exports = {
     jest: true,
   },
   rules: {
-    semi: ["error", "always"],
-    quotes: ["error", "double"],
     "no-restricted-syntax": ["error", "ForInStatement", "LabeledStatement", "WithStatement"],
     "no-continue": "off",
     "no-await-in-loop": "off",

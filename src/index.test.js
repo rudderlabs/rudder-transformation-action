@@ -292,28 +292,29 @@ describe("test and publish transformation and libraries successfully", () => {
       },
     });
 
-    updateLibrary.mockReturnValueOnce({
-      data: {
-        id: "library_id_1",
-        versionId: "library_version_id_1",
-      },
-    }).mockReturnValueOnce({
-      data: {
-        id: "library_id_2",
-        versionId: "library_version_id_2",
-      },
-    });
+    updateLibrary
+      .mockReturnValueOnce({
+        data: {
+          id: "library_id_1",
+          versionId: "library_version_id_1",
+        },
+      })
+      .mockReturnValueOnce({
+        data: {
+          id: "library_id_2",
+          versionId: "library_version_id_2",
+        },
+      });
 
     testTransformationAndLibrary.mockResolvedValue({
       data: {
         result: {
-          successTestResults: [
-          ],
+          successTestResults: [],
           failedTestResults: [
             {
               id: "transformation-id",
               name: "some-upstream-transformation",
-              error: "{\"success\": false, \"error\": \"some error message\"}",
+              error: '{"success": false, "error": "some error message"}',
             },
           ],
         },
@@ -396,7 +397,8 @@ describe("test and publish transformation and libraries successfully", () => {
               },
             },
             {
-              transformerVersionID: "other_connection_transformation_version_id",
+              transformerVersionID:
+                "other_connection_transformation_version_id",
               result: {
                 output: {
                   transformedEvents: [{}],

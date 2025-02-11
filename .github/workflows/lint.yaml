@@ -22,4 +22,7 @@ jobs:
         run: npm install
 
       - name: Run linter
-        run: npm run lint # Adjust this command based on your linter setup
+        run: npm run lint 
+
+      - name: Run prettier
+        run: npm run prettier
