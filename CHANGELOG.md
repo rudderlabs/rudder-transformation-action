@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.5](https://github.com/rudderlabs/rudder-transformation-action/compare/v1.1.4...v1.1.5) (2025-02-12)
+
+
+### Miscellaneous
+
+* add support for lint and prettier in repo ([#46](https://github.com/rudderlabs/rudder-transformation-action/issues/46)) ([8234362](https://github.com/rudderlabs/rudder-transformation-action/commit/8234362798737764dc744c38cc5635691c84d20c))
+
 ## [1.1.4](https://github.com/rudderlabs/rudder-transformation-action/compare/v1.1.3...v1.1.4) (2025-02-10)
 
 
