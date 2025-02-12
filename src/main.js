@@ -375,5 +375,4 @@ module.exports = {
   upsertLibraries,
   buildTestSuite,
   testAndPublish,
-  colorize,
 };
