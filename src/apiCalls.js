@@ -1,179 +1,110 @@
 const axios = require("axios");
+const { getPlatform } = require("./platform");
 
-const core = require("@actions/core");
+const platform = getPlatform();
 
-const serverEndpoint =
-  core.getInput("serverEndpoint") || "https://api.rudderstack.com";
-const createTransformerEndpoint = `${serverEndpoint}/transformations`;
-const createLibraryEndpoint = `${serverEndpoint}/libraries`;
-const testEndpoint = `${serverEndpoint}/transformations/libraries/test`;
-const publishEndpoint = `${serverEndpoint}/transformations/libraries/publish`;
-const listTransformationsEndpoint = `${serverEndpoint}/transformations`;
-const listLibrariesEndpoint = `${serverEndpoint}/libraries`;
+/**
+ * Validates the server endpoint URL.
+ * - Must use HTTPS.
+ * - Must be a syntactically valid URL.
+ * - Returns the URL with trailing slashes stripped.
+ * @param {string} endpoint
+ * @returns {string}
+ */
+function validateEndpoint(endpoint) {
+  let parsed;
+  try {
+    parsed = new URL(endpoint);
+  } catch {
+    throw new Error(`Invalid serverEndpoint URL: "${endpoint}"`);
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error(
+      `serverEndpoint must use HTTPS. Got: "${parsed.protocol}//${parsed.host}"`,
+    );
+  }
+  return endpoint.replace(/\/+$/, "");
+}
 
-const defaultHeader = {
-  "user-agent": "transformationAction",
-};
+const rawEndpoint =
+  platform.getInput("serverEndpoint") || "https://api.rudderstack.com";
+const serverEndpoint = validateEndpoint(rawEndpoint);
+
+// Single configured axios instance shared by all API functions.
+// Auth credentials are read once at startup; timeout is 60 s.
+const client = axios.create({
+  baseURL: serverEndpoint,
+  auth: {
+    username: platform.getInput("email"),
+    password: platform.getInput("accessToken"),
+  },
+  headers: { "user-agent": "transformationAction" },
+  timeout: 60000,
+});
 
 async function getAllTransformations() {
-  core.info("Getting all transformations from upstream");
-
-  return axios.default.get(listTransformationsEndpoint, {
-    auth: {
-      username: core.getInput("email"),
-      password: core.getInput("accessToken"),
-    },
-    headers: {
-      ...defaultHeader,
-    },
-  });
+  platform.info("Getting all transformations from upstream");
+  return client.get("/transformations");
 }
 
 async function getAllLibraries() {
-  core.info("Getting all libraries from upstream");
-
-  return axios.default.get(listLibrariesEndpoint, {
-    auth: {
-      username: core.getInput("email"),
-      password: core.getInput("accessToken"),
-    },
-    headers: {
-      ...defaultHeader,
-    },
-  });
+  platform.info("Getting all libraries from upstream");
+  return client.get("/libraries");
 }
 
 async function createTransformation(name, description, code, language) {
-  core.info(`Creating transformation: ${name}`);
-
-  return axios.default.post(
-    `${createTransformerEndpoint}?publish=false`,
-    {
-      name,
-      description,
-      code,
-      language,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info(`Creating transformation: ${name}`);
+  return client.post("/transformations?publish=false", {
+    name,
+    description,
+    code,
+    language,
+  });
 }
 
 async function updateTransformation(id, name, description, code, language) {
-  core.info(`Updating transformation: ${name}`);
-
-  return axios.default.post(
-    `${createTransformerEndpoint}/${id}?publish=false`,
-    {
-      description,
-      code,
-      language,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info(`Updating transformation: ${name}`);
+  return client.post(`/transformations/${id}?publish=false`, {
+    description,
+    code,
+    language,
+  });
 }
 
 async function createLibrary(name, description, code, language) {
-  core.info(`Creating library: ${name}`);
-
-  return axios.default.post(
-    `${createLibraryEndpoint}?publish=false`,
-    {
-      name,
-      description,
-      code,
-      language,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info(`Creating library: ${name}`);
+  return client.post("/libraries?publish=false", {
+    name,
+    description,
+    code,
+    language,
+  });
 }
 
 async function updateLibrary(id, description, code, language) {
-  core.info(`Updating library: ${id}`);
-
-  return axios.default.post(
-    `${createLibraryEndpoint}/${id}?publish=false`,
-    {
-      description,
-      code,
-      language,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info(`Updating library: ${id}`);
+  return client.post(`/libraries/${id}?publish=false`, {
+    description,
+    code,
+    language,
+  });
 }
 
 async function testTransformationAndLibrary(transformations, libraries) {
-  core.info("Testing transformations and libraries");
-
-  return axios.default.post(
-    `${testEndpoint}`,
-    {
-      transformations,
-      libraries,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info("Testing transformations and libraries");
+  return client.post("/transformations/libraries/test", {
+    transformations,
+    libraries,
+  });
 }
 
 async function publish(transformations, libraries, commitId) {
-  core.info("Publishing transformations and libraries");
-
-  return axios.default.post(
-    `${publishEndpoint}`,
-    {
-      transformations,
-      libraries,
-      commitId,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info("Publishing transformations and libraries");
+  return client.post("/transformations/libraries/publish", {
+    transformations,
+    libraries,
+    commitId,
+  });
 }
 
 module.exports = {
