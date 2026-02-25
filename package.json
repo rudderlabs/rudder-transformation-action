@@ -20,11 +20,11 @@
     "@actions/artifact": "^2.2.1",
     "@actions/core": "^1.11.1",
     "axios": "^1.11.0",
-    "codecov": "^3.8.3",
     "deep-object-diff": "^1.1.9",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
+    "codecov": "^3.8.3",
     "@eslint/js": "^9.20.0",
     "@vercel/ncc": "^0.36.1",
     "eslint": "^8.57.1",

@@ -105844,181 +105844,112 @@ ZipStream.prototype.finalize = function() {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const axios = __nccwpck_require__(88757);
+const { getPlatform } = __nccwpck_require__(93390);
 
-const core = __nccwpck_require__(42186);
+const platform = getPlatform();
 
-const serverEndpoint =
-  core.getInput("serverEndpoint") || "https://api.rudderstack.com";
-const createTransformerEndpoint = `${serverEndpoint}/transformations`;
-const createLibraryEndpoint = `${serverEndpoint}/libraries`;
-const testEndpoint = `${serverEndpoint}/transformations/libraries/test`;
-const publishEndpoint = `${serverEndpoint}/transformations/libraries/publish`;
-const listTransformationsEndpoint = `${serverEndpoint}/transformations`;
-const listLibrariesEndpoint = `${serverEndpoint}/libraries`;
+/**
+ * Validates the server endpoint URL.
+ * - Must use HTTPS.
+ * - Must be a syntactically valid URL.
+ * - Returns the URL with trailing slashes stripped.
+ * @param {string} endpoint
+ * @returns {string}
+ */
+function validateEndpoint(endpoint) {
+  let parsed;
+  try {
+    parsed = new URL(endpoint);
+  } catch {
+    throw new Error(`Invalid serverEndpoint URL: "${endpoint}"`);
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error(
+      `serverEndpoint must use HTTPS. Got: "${parsed.protocol}//${parsed.host}"`,
+    );
+  }
+  return endpoint.replace(/\/+$/, "");
+}
 
-const defaultHeader = {
-  "user-agent": "transformationAction",
-};
+const rawEndpoint =
+  platform.getInput("serverEndpoint") || "https://api.rudderstack.com";
+const serverEndpoint = validateEndpoint(rawEndpoint);
+
+// Single configured axios instance shared by all API functions.
+// Auth credentials are read once at startup; timeout is 60 s.
+const client = axios.create({
+  baseURL: serverEndpoint,
+  auth: {
+    username: platform.getInput("email"),
+    password: platform.getInput("accessToken"),
+  },
+  headers: { "user-agent": "transformationAction" },
+  timeout: 60000,
+});
 
 async function getAllTransformations() {
-  core.info("Getting all transformations from upstream");
-
-  return axios.default.get(listTransformationsEndpoint, {
-    auth: {
-      username: core.getInput("email"),
-      password: core.getInput("accessToken"),
-    },
-    headers: {
-      ...defaultHeader,
-    },
-  });
+  platform.info("Getting all transformations from upstream");
+  return client.get("/transformations");
 }
 
 async function getAllLibraries() {
-  core.info("Getting all libraries from upstream");
-
-  return axios.default.get(listLibrariesEndpoint, {
-    auth: {
-      username: core.getInput("email"),
-      password: core.getInput("accessToken"),
-    },
-    headers: {
-      ...defaultHeader,
-    },
-  });
+  platform.info("Getting all libraries from upstream");
+  return client.get("/libraries");
 }
 
 async function createTransformation(name, description, code, language) {
-  core.info(`Creating transformation: ${name}`);
-
-  return axios.default.post(
-    `${createTransformerEndpoint}?publish=false`,
-    {
-      name,
-      description,
-      code,
-      language,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info(`Creating transformation: ${name}`);
+  return client.post("/transformations?publish=false", {
+    name,
+    description,
+    code,
+    language,
+  });
 }
 
 async function updateTransformation(id, name, description, code, language) {
-  core.info(`Updating transformation: ${name}`);
-
-  return axios.default.post(
-    `${createTransformerEndpoint}/${id}?publish=false`,
-    {
-      description,
-      code,
-      language,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info(`Updating transformation: ${name}`);
+  return client.post(`/transformations/${id}?publish=false`, {
+    description,
+    code,
+    language,
+  });
 }
 
 async function createLibrary(name, description, code, language) {
-  core.info(`Creating library: ${name}`);
-
-  return axios.default.post(
-    `${createLibraryEndpoint}?publish=false`,
-    {
-      name,
-      description,
-      code,
-      language,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info(`Creating library: ${name}`);
+  return client.post("/libraries?publish=false", {
+    name,
+    description,
+    code,
+    language,
+  });
 }
 
 async function updateLibrary(id, description, code, language) {
-  core.info(`Updating library: ${id}`);
-
-  return axios.default.post(
-    `${createLibraryEndpoint}/${id}?publish=false`,
-    {
-      description,
-      code,
-      language,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info(`Updating library: ${id}`);
+  return client.post(`/libraries/${id}?publish=false`, {
+    description,
+    code,
+    language,
+  });
 }
 
 async function testTransformationAndLibrary(transformations, libraries) {
-  core.info("Testing transformations and libraries");
-
-  return axios.default.post(
-    `${testEndpoint}`,
-    {
-      transformations,
-      libraries,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info("Testing transformations and libraries");
+  return client.post("/transformations/libraries/test", {
+    transformations,
+    libraries,
+  });
 }
 
 async function publish(transformations, libraries, commitId) {
-  core.info("Publishing transformations and libraries");
-
-  return axios.default.post(
-    `${publishEndpoint}`,
-    {
-      transformations,
-      libraries,
-      commitId,
-    },
-    {
-      auth: {
-        username: core.getInput("email"),
-        password: core.getInput("accessToken"),
-      },
-      headers: {
-        ...defaultHeader,
-      },
-    },
-  );
+  platform.info("Publishing transformations and libraries");
+  return client.post("/transformations/libraries/publish", {
+    transformations,
+    libraries,
+    commitId,
+  });
 }
 
 module.exports = {
@@ -106038,12 +105969,14 @@ module.exports = {
 /***/ 31713:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-const core = __nccwpck_require__(42186);
 const fs = __nccwpck_require__(57147);
+const path = __nccwpck_require__(71017);
 const isEqual = __nccwpck_require__(20052);
-const { DefaultArtifactClient } = __nccwpck_require__(79450);
-const { detailedDiff } = __nccwpck_require__(15503);
 const _ = __nccwpck_require__(90250);
+const { detailedDiff } = __nccwpck_require__(15503);
+const { getPlatform } = __nccwpck_require__(93390);
+
+const platform = getPlatform();
 const {
   getAllTransformations,
   getAllLibraries,
@@ -106057,14 +105990,17 @@ const {
 
 const testOutputDir = "./test-outputs";
 const uploadTestArtifact =
-  core.getInput("uploadTestArtifact")?.toLowerCase() === "true";
-const metaFilePath = core.getInput("metaPath");
+  platform.getInput("uploadTestArtifact")?.toLowerCase() === "true";
+const metaFilePath = platform.getInput("metaPath");
 
-const testOnly = process.env.TEST_ONLY !== "false";
-const commitId = process.env.GITHUB_SHA || "";
-const artifactClient = new DefaultArtifactClient();
+const testOnly = platform.getInput("testOnly") !== "false";
+const commitId = platform.getCommitSha();
 
 function colorize(message, color) {
+  if (!process.stdout.isTTY) {
+    return message;
+  }
+
   const colors = {
     reset: "\x1b[0m",
     red: "\x1b[31m",
@@ -106079,9 +106015,20 @@ function colorize(message, color) {
   return `${colors[color]}${message}${colors.reset}`;
 }
 
+function safePath(filePath) {
+  const resolved = path.resolve(filePath);
+  const cwd = process.cwd();
+  if (!resolved.startsWith(cwd + path.sep) && resolved !== cwd) {
+    throw new Error(
+      `Path traversal detected: ${filePath} is outside the workspace`,
+    );
+  }
+  return resolved;
+}
+
 // Log failed tests
 function logResult(result) {
-  core.info(
+  platform.info(
     colorize(
       `\nTotal tests ${
         result.successTestResults.length + result.failedTestResults.length
@@ -106092,20 +106039,20 @@ function logResult(result) {
     ),
   );
   if (result.failedTestResults.length > 0) {
-    core.info(colorize("\nFailed Tests:\n", "yellow"));
+    platform.info(colorize("\nFailed Tests:\n", "yellow"));
 
     for (const test of result.failedTestResults) {
-      core.info(colorize(`   ID: ${test.id}`, "red"));
-      core.info(colorize(`   Name: ${test.name}`, "red"));
-      core.info(colorize(`   Error: ${JSON.stringify(test.result)}\n`, "red"));
-      core.info(`\n${"=".repeat(40)}\n`);
+      platform.info(colorize(`   ID: ${test.id}`, "red"));
+      platform.info(colorize(`   Name: ${test.name}`, "red"));
+      platform.info(colorize(`   Error: ${JSON.stringify(test.result)}\n`, "red"));
+      platform.info(`\n${"=".repeat(40)}\n`);
     }
   }
 }
 
 // Load transformations and libraries from a local meta file.
 function getTransformationsAndLibrariesFromLocal(fpath) {
-  core.info(`Loading transformations and libraries locally from: ${fpath}`);
+  platform.info(`Loading transformations and libraries locally from: ${fpath}`);
 
   const transformations = [];
   const libraries = [];
@@ -106133,26 +106080,22 @@ async function loadTransformationsAndLibraries() {
   let workspaceLibraries = [];
 
   const transformationsResponse = await getAllTransformations();
-  workspaceTransformations = transformationsResponse.data
-    ? JSON.parse(JSON.stringify(transformationsResponse.data.transformations))
-    : [];
+  workspaceTransformations = transformationsResponse.data?.transformations || [];
 
   const librariesResponse = await getAllLibraries();
-  workspaceLibraries = librariesResponse.data
-    ? JSON.parse(JSON.stringify(librariesResponse.data.libraries))
-    : [];
+  workspaceLibraries = librariesResponse.data?.libraries || [];
 
   return { workspaceTransformations, workspaceLibraries };
 }
 
 // Create or update transformations
 async function upsertTransformations(transformations, transformationNameToId) {
-  core.info("Upserting transformations");
+  platform.info("Upserting transformations");
 
   const transformationDict = {};
 
   for (const tr of transformations) {
-    const code = fs.readFileSync(tr.file, "utf-8");
+    const code = fs.readFileSync(safePath(tr.file), "utf-8");
     let res;
     if (transformationNameToId[tr.name]) {
       // update existing transformer and get a new versionId
@@ -106173,6 +106116,11 @@ async function upsertTransformations(transformations, transformationNameToId) {
         tr.language,
       );
     }
+    if (!res?.data?.versionId || !res?.data?.id) {
+      throw new Error(
+        `Unexpected API response for ${tr.name}: missing versionId or id`,
+      );
+    }
     transformationDict[res.data.versionId] = { ...tr, id: res.data.id };
   }
 
@@ -106181,21 +106129,26 @@ async function upsertTransformations(transformations, transformationNameToId) {
 
 // Create or update a library.
 async function upsertLibraries(libraries, libraryNameToId) {
-  core.info("Upserting libraries upstream");
+  platform.info("Upserting libraries upstream");
 
   const libraryDict = {};
   for (const lib of libraries) {
-    const code = fs.readFileSync(lib.file, "utf-8");
+    const code = fs.readFileSync(safePath(lib.file), "utf-8");
     let res;
     if (libraryNameToId[lib.name]) {
       // update library and get a new versionId
-      core.info(`Updating library: ${lib.name}`);
+      platform.info(`Updating library: ${lib.name}`);
       const id = libraryNameToId[lib.name];
       res = await updateLibrary(id, lib.description, code, lib.language);
     } else {
       // create a new library
-      core.info(`Creating library: ${lib.name}`);
+      platform.info(`Creating library: ${lib.name}`);
       res = await createLibrary(lib.name, lib.description, code, lib.language);
+    }
+    if (!res?.data?.versionId || !res?.data?.id) {
+      throw new Error(
+        `Unexpected API response for ${lib.name}: missing versionId or id`,
+      );
     }
     libraryDict[res.data.versionId] = { ...lib, id: res.data.id };
   }
@@ -106204,7 +106157,7 @@ async function upsertLibraries(libraries, libraryNameToId) {
 
 // Build the test suite.
 async function buildTestSuite(transformationDict, libraryDict) {
-  core.info("Building test suite");
+  platform.info("Building test suite");
 
   const transformationTest = [];
   const librariesTest = [];
@@ -106213,12 +106166,12 @@ async function buildTestSuite(transformationDict, libraryDict) {
     const testInputPath =
       transformationDict[trVersionId]["test-input-file"] || "";
     const testInput = testInputPath
-      ? JSON.parse(fs.readFileSync(testInputPath))
+      ? JSON.parse(fs.readFileSync(safePath(testInputPath)))
       : "";
     if (testInput) {
       transformationTest.push({ versionId: trVersionId, testInput });
     } else {
-      core.info(
+      platform.info(
         `No test input provided. Testing ${transformationDict[trVersionId].name} with default payload`,
       );
       transformationTest.push({ versionId: trVersionId });
@@ -106229,11 +106182,11 @@ async function buildTestSuite(transformationDict, libraryDict) {
     librariesTest.push({ versionId });
   }
 
-  core.info(
+  platform.info(
     `Final transformation versions to be tested:
     ${JSON.stringify(transformationTest)}`,
   );
-  core.info(
+  platform.info(
     `Final library versions to be tested: ${JSON.stringify(librariesTest)}`,
   );
   return { transformationTest, librariesTest };
@@ -106241,7 +106194,7 @@ async function buildTestSuite(transformationDict, libraryDict) {
 
 // Run the test suite.
 async function runTestSuite(transformationTest, librariesTest) {
-  core.info("Running test suite for transformations and libraries");
+  platform.info("Running test suite for transformations and libraries");
 
   const res = await testTransformationAndLibrary(
     transformationTest,
@@ -106261,7 +106214,7 @@ async function runTestSuite(transformationTest, librariesTest) {
 
 // Compare the API output with the actual output.
 async function compareOutput(successResults, transformationDict) {
-  core.info("Comparing actual output with expected output");
+  platform.info("Comparing actual output with expected output");
 
   const outputMismatchResults = [];
   const testOutputFiles = [];
@@ -106285,13 +106238,12 @@ async function compareOutput(successResults, transformationDict) {
     const transformationName = transformationDict[transformerVersionID].name;
     const transformationHandleName = _.camelCase(transformationName);
 
-    fs.writeFileSync(
-      `${testOutputDir}/${transformationHandleName}_output.json`,
-      JSON.stringify(actualOutput, null, 2),
+    const outputFilePath = path.join(
+      testOutputDir,
+      `${transformationHandleName}_output.json`,
     );
-    testOutputFiles.push(
-      `${testOutputDir}/${transformationHandleName}_output.json`,
-    );
+    fs.writeFileSync(outputFilePath, JSON.stringify(actualOutput, null, 2));
+    testOutputFiles.push(outputFilePath);
 
     if (
       !Object.prototype.hasOwnProperty.call(
@@ -106305,7 +106257,7 @@ async function compareOutput(successResults, transformationDict) {
     const expectedOutputfile =
       transformationDict[transformerVersionID]["expected-output"];
     const expectedOutput = expectedOutputfile
-      ? JSON.parse(fs.readFileSync(expectedOutputfile))
+      ? JSON.parse(fs.readFileSync(safePath(expectedOutputfile)))
       : "";
 
     if (expectedOutput === "") {
@@ -106313,21 +106265,23 @@ async function compareOutput(successResults, transformationDict) {
     }
 
     if (!isEqual(expectedOutput, actualOutput)) {
-      core.info(
+      platform.info(
         `Test output do not match for transformation: ${transformationName}`,
       );
       outputMismatchResults.push(
         `Test output do not match for transformation: ${transformationName}`,
       );
 
+      const diffFilePath = path.join(
+        testOutputDir,
+        `${transformationHandleName}_diff.json`,
+      );
       fs.writeFileSync(
-        `${testOutputDir}/${transformationHandleName}_diff.json`,
+        diffFilePath,
         JSON.stringify(detailedDiff(expectedOutput, actualOutput), null, 2),
       );
 
-      testOutputFiles.push(
-        `${testOutputDir}/${transformationHandleName}_diff.json`,
-      );
+      testOutputFiles.push(diffFilePath);
     }
   }
   return { outputMismatchResults, testOutputFiles };
@@ -106335,16 +106289,17 @@ async function compareOutput(successResults, transformationDict) {
 
 // Upload the test results to an artifact store.
 async function uploadTestArtifacts(testOutputFiles) {
-  core.info("Uploading test artifacts");
-  // upload artifact
+  platform.info("Uploading test artifacts");
 
-  const artifactClientResponse = await artifactClient.uploadArtifact(
+  const artifactClientResponse = await platform.uploadArtifact(
     "transformer-test-results",
     testOutputFiles,
     ".",
   );
 
-  core.info(`Test artifact uploaded with id: ${artifactClientResponse.id}`);
+  if (artifactClientResponse && artifactClientResponse.id) {
+    platform.info(`Test artifact uploaded with id: ${artifactClientResponse.id}`);
+  }
 }
 
 // Publish the transformations and libraries.
@@ -106353,18 +106308,18 @@ async function publishTransformation(
   librariesTest,
   commitIdentifier,
 ) {
-  core.info("Publishing transformations and libraries");
+  platform.info("Publishing transformations and libraries");
   // publish
   await publish(transformationTest, librariesTest, commitIdentifier);
 }
 
-async function testAndPublish(path = metaFilePath) {
-  core.info(
+async function testAndPublish(metaPath = metaFilePath) {
+  platform.info(
     "Starting with test and publish of the transformations and libraries",
   );
 
   const { transformations, libraries } =
-    getTransformationsAndLibrariesFromLocal(path);
+    getTransformationsAndLibrariesFromLocal(metaPath);
   const { workspaceTransformations, workspaceLibraries } =
     await loadTransformationsAndLibraries();
 
@@ -106404,7 +106359,7 @@ async function testAndPublish(path = metaFilePath) {
     await publishTransformation(transformationTest, librariesTest, commitId);
   }
 
-  core.info("Successfully executed the workflow");
+  platform.info("Successfully executed the workflow");
 }
 
 module.exports = {
@@ -106416,6 +106371,137 @@ module.exports = {
   buildTestSuite,
   testAndPublish,
 };
+
+
+/***/ }),
+
+/***/ 93390:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+// Platform abstraction layer.
+// Provides a unified interface for GitHub Actions and GitLab CI.
+// IMPORTANT: init() must be called before requiring any module that uses getPlatform().
+
+const createGitHubPlatform = __nccwpck_require__(56305);
+const createGitLabPlatform = __nccwpck_require__(5387);
+
+const platforms = {
+  github: createGitHubPlatform,
+  gitlab: createGitLabPlatform,
+};
+
+let platform = null;
+
+function detectPlatform() {
+  if (process.env.GITLAB_CI === "true") {
+    return "gitlab";
+  }
+  return "github";
+}
+
+function init(forcePlatform) {
+  // If already initialized and not forcing a specific platform (e.g. in tests),
+  // return the existing instance to avoid re-initialization.
+  if (platform && !forcePlatform) {
+    return platform;
+  }
+  const name = forcePlatform || detectPlatform();
+  const factory = platforms[name];
+  if (!factory) {
+    throw new Error(`Unknown platform: ${name}`);
+  }
+  platform = factory();
+  return platform;
+}
+
+function getPlatform() {
+  if (!platform) {
+    throw new Error(
+      "Platform not initialized. Call platform.init() before requiring other modules.",
+    );
+  }
+  return platform;
+}
+
+module.exports = { init, getPlatform, detectPlatform };
+
+
+/***/ }),
+
+/***/ 56305:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+/* eslint-disable global-require */
+
+function createGitHubPlatform() {
+  const core = __nccwpck_require__(42186);
+  const { DefaultArtifactClient } = __nccwpck_require__(79450);
+  const artifactClient = new DefaultArtifactClient();
+
+  return {
+    getInput(name) {
+      return core.getInput(name);
+    },
+    info(message) {
+      core.info(message);
+    },
+    async uploadArtifact(name, files, rootDir) {
+      return artifactClient.uploadArtifact(name, files, rootDir);
+    },
+    getCommitSha() {
+      return process.env.GITHUB_SHA || "";
+    },
+    setFailed(message) {
+      core.setFailed(message);
+    },
+  };
+}
+
+module.exports = createGitHubPlatform;
+
+
+/***/ }),
+
+/***/ 5387:
+/***/ ((module) => {
+
+function createGitLabPlatform() {
+  const inputMap = {
+    metaPath: "META_PATH",
+    email: "RUDDERSTACK_EMAIL",
+    accessToken: "RUDDERSTACK_ACCESS_TOKEN",
+    serverEndpoint: "RUDDERSTACK_SERVER_ENDPOINT",
+    uploadTestArtifact: "UPLOAD_TEST_ARTIFACT",
+    testOnly: "TEST_ONLY",
+  };
+
+  return {
+    getInput(name) {
+      const envName = inputMap[name];
+      if (!envName) {
+        return "";
+      }
+      return process.env[envName] || "";
+    },
+    info(message) {
+      // eslint-disable-next-line no-console
+      console.log(message);
+    },
+    async uploadArtifact() {
+      // No-op: GitLab CI collects artifacts via artifacts: paths: in .gitlab-ci.yml
+    },
+    getCommitSha() {
+      return process.env.CI_COMMIT_SHA || "";
+    },
+    setFailed(message) {
+      // eslint-disable-next-line no-console
+      console.error(message);
+      process.exitCode = 1;
+    },
+  };
+}
+
+module.exports = createGitLabPlatform;
 
 
 /***/ }),
@@ -129243,10 +129329,19 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
+const { init, getPlatform } = __nccwpck_require__(93390);
+
+// Initialize platform before requiring modules that call getInput() at load time.
+init();
+
 const { testAndPublish } = __nccwpck_require__(31713);
 
 // Start the testing and publishing process.
-testAndPublish();
+testAndPublish().catch((error) => {
+  const p = getPlatform();
+  p.setFailed(error.message);
+  process.exitCode = 1;
+});
 
 })();
 

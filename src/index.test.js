@@ -8,6 +8,7 @@ const {
   createLibrary,
   updateTransformation,
   updateLibrary,
+  publish,
 } = require("./apiCalls");
 const { testAndPublish } = require("./main");
 
@@ -19,15 +20,22 @@ jest.mock("./apiCalls", () => ({
   createLibrary: jest.fn(),
   updateLibrary: jest.fn(),
   testTransformationAndLibrary: jest.fn(),
+  publish: jest.fn(),
 }));
 
-// Mock the @actions/core module
-jest.mock("@actions/core", () => {
-  const coreMock = {
-    info: jest.fn(),
+// Mock the platform module
+jest.mock("./platform", () => {
+  const platformMock = {
     getInput: jest.fn(),
+    info: jest.fn(),
+    uploadArtifact: jest.fn().mockResolvedValue({}),
+    getCommitSha: jest.fn().mockReturnValue("test-commit-sha"),
   };
-  return coreMock;
+  return {
+    init: jest.fn(),
+    getPlatform: jest.fn().mockReturnValue(platformMock),
+    detectPlatform: jest.fn().mockReturnValue("github"),
+  };
 });
 
 function readFile(path) {
@@ -37,7 +45,7 @@ function readFile(path) {
 describe("test and publish transformation and libraries successfully", () => {
   beforeEach(() => {
     try {
-      fs.rmdirSync("./test-outputs", { force: true, recursive: true });
+      fs.rmSync("./test-outputs", { force: true, recursive: true });
     } catch (err) {
       // Do nothing
     } finally {
@@ -326,6 +334,15 @@ describe("test and publish transformation and libraries successfully", () => {
     );
   });
 
+  it("should propagate error when an API call rejects with a network error", async () => {
+    const metapath = "./src/testdata/meta.json";
+    const networkError = new Error("Network Error");
+
+    getAllTransformations.mockRejectedValue(networkError);
+
+    await expect(testAndPublish(metapath)).rejects.toThrow("Network Error");
+  });
+
   it("should handle case when library is connected to transformations not managed within the workflow", async () => {
     const metapath = "./src/testdata/meta.json";
 
@@ -412,5 +429,61 @@ describe("test and publish transformation and libraries successfully", () => {
     });
 
     await expect(testAndPublish(metapath)).resolves.toEqual(undefined);
+  });
+});
+
+describe("publish code path", () => {
+  let isolatedTestAndPublish;
+  let isolatedPublish;
+
+  beforeEach(() => {
+    jest.resetModules();
+
+    jest.doMock("./apiCalls", () => ({
+      getAllTransformations: jest.fn().mockResolvedValue([]),
+      getAllLibraries: jest.fn().mockResolvedValue([]),
+      updateTransformation: jest.fn(),
+      createTransformation: jest.fn(),
+      createLibrary: jest.fn(),
+      updateLibrary: jest.fn(),
+      testTransformationAndLibrary: jest.fn().mockResolvedValue({
+        data: { result: { successTestResults: [], failedTestResults: [] } },
+      }),
+      publish: jest.fn().mockResolvedValue({}),
+    }));
+
+    jest.doMock("./platform", () => {
+      const platformMock = {
+        getInput: jest.fn((name) => {
+          if (name === "testOnly") return "false";
+          return undefined;
+        }),
+        info: jest.fn(),
+        uploadArtifact: jest.fn().mockResolvedValue({}),
+        getCommitSha: jest.fn().mockReturnValue("publish-commit-sha"),
+        setFailed: jest.fn(),
+      };
+      return {
+        init: jest.fn(),
+        getPlatform: jest.fn().mockReturnValue(platformMock),
+        detectPlatform: jest.fn().mockReturnValue("github"),
+      };
+    });
+
+    const apiCalls = require("./apiCalls");
+    isolatedPublish = apiCalls.publish;
+    isolatedTestAndPublish = require("./main").testAndPublish;
+  });
+
+  afterEach(() => {
+    jest.resetModules();
+  });
+
+  it("should call publish with the correct arguments when TEST_ONLY is false", async () => {
+    const metapath = "./src/testdata/emptymeta.json";
+    await expect(isolatedTestAndPublish(metapath)).resolves.toEqual(undefined);
+
+    expect(isolatedPublish).toHaveBeenCalledTimes(1);
+    expect(isolatedPublish).toHaveBeenCalledWith([], [], "publish-commit-sha");
   });
 });
