@@ -1,0 +1,53 @@
+# RudderStack Transformation Action - GitLab CI Template
+#
+# Include this in your .gitlab-ci.yml:
+#
+#   include:
+#     - remote: 'https://raw.githubusercontent.com/rudderlabs/rudder-transformation-action/main/gitlab-ci-template.yml'
+#
+# Then extend the hidden job:
+#
+#   rudderstack-test:
+#     extends: .rudderstack-transformation
+#     variables:
+#       META_PATH: './meta.json'
+#
+#   rudderstack-publish:
+#     extends: .rudderstack-transformation
+#     variables:
+#       META_PATH: './meta.json'
+#       TEST_ONLY: 'false'
+#     rules:
+#       - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#
+# Required CI/CD variables (set in Settings > CI/CD > Variables):
+#   RUDDERSTACK_EMAIL        - Workspace owner email
+#   RUDDERSTACK_ACCESS_TOKEN - Workspace access token (masked)
+#
+# Optional variables (can be set per-job):
+#   META_PATH                     - Path to meta.json (default: meta.json)
+#   RUDDERSTACK_SERVER_ENDPOINT   - API URL (default: https://api.rudderstack.com)
+#   UPLOAD_TEST_ARTIFACT          - Enable artifact flag (default: false)
+#   TEST_ONLY                     - Set to 'false' to publish (default: true)
+
+.rudderstack-transformation:
+  image: node:20-alpine
+  variables:
+    META_PATH: 'meta.json'
+    RUDDERSTACK_SERVER_ENDPOINT: 'https://api.rudderstack.com'
+    UPLOAD_TEST_ARTIFACT: 'false'
+    TEST_ONLY: 'true'
+  before_script:
+    # Security: the repository URL and version tag are intentionally hardcoded here
+    # and not exposed as CI variables. Allowing them to be overridden by pipeline
+    # variables would enable arbitrary code execution (a contributor could point
+    # these at a malicious repository). Do not move them back into the variables block.
+    - apk add --no-cache git
+    - git clone --depth 1 --branch "v1" "https://github.com/rudderlabs/rudder-transformation-action.git" /tmp/rudder-action
+  script:
+    - node /tmp/rudder-action/dist/index.js
+  artifacts:
+    when: always
+    paths:
+      - test-outputs/
+    expire_in: 1 week
