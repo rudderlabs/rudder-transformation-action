@@ -59588,18 +59588,6 @@ var hasOwn = __nccwpck_require__(62157);
 var populate = __nccwpck_require__(17142);
 
 /**
- * Escape CR, LF, and `"` in a multipart `name`/`filename` parameter, so a field
- * name or filename can not break out of its header line to inject headers or
- * smuggle additional parts. Matches the WHATWG HTML multipart/form-data encoding.
- *
- * @param {string} str - the parameter value to escape
- * @returns {string} the escaped value
- */
-function escapeHeaderParam(str) {
-  return String(str).replace(/\r/g, '%0D').replace(/\n/g, '%0A').replace(/"/g, '%22');
-}
-
-/**
  * Create readable "multipart/form-data" streams.
  * Can be used to submit forms
  * and file uploads to other web applications.
@@ -59764,7 +59752,7 @@ FormData.prototype._multiPartHeader = function (field, value, options) {
   var contents = '';
   var headers = {
     // add custom disposition as third element or keep it two elements if not
-    'Content-Disposition': ['form-data', 'name="' + escapeHeaderParam(field) + '"'].concat(contentDisposition || []),
+    'Content-Disposition': ['form-data', 'name="' + field + '"'].concat(contentDisposition || []),
     // if no content type. allow it to be empty array
     'Content-Type': [].concat(contentType || [])
   };
@@ -59818,7 +59806,7 @@ FormData.prototype._getContentDisposition = function (value, options) { // eslin
   }
 
   if (filename) {
-    return 'filename="' + escapeHeaderParam(filename) + '"';
+    return 'filename="' + filename + '"';
   }
 };
 
