@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.1.5](https://github.com/rudderlabs/rudder-transformation-action/compare/v1.1.4...v1.1.5) (2026-06-17)
+
+
+### Bug Fixes
+
+* upgrade axios to 1.16.0+ ([#138](https://github.com/rudderlabs/rudder-transformation-action/issues/138)) ([2ca1ac2](https://github.com/rudderlabs/rudder-transformation-action/commit/2ca1ac2b708217a16f35a1a196a99d156b80ec1b))
+* **vuln:** pin and bump action refs (SEC-171) ([b942f97](https://github.com/rudderlabs/rudder-transformation-action/commit/b942f9712a177ea304727acbf9870054384dabd0))
+
+
+### Miscellaneous
+
+* add dependabot action to transformation action ([#49](https://github.com/rudderlabs/rudder-transformation-action/issues/49)) ([fee4f92](https://github.com/rudderlabs/rudder-transformation-action/commit/fee4f9278dd3be5b821f06085b7c6ec0539c402b))
+* add support for lint and prettier in repo ([#46](https://github.com/rudderlabs/rudder-transformation-action/issues/46)) ([8234362](https://github.com/rudderlabs/rudder-transformation-action/commit/8234362798737764dc744c38cc5635691c84d20c))
+* apply security best practices from step security ([#108](https://github.com/rudderlabs/rudder-transformation-action/issues/108)) ([8d2e4cf](https://github.com/rudderlabs/rudder-transformation-action/commit/8d2e4cff878c2a17cb496565e9ae04e2c9987f0f))
+* apply security best practices from step security ([#116](https://github.com/rudderlabs/rudder-transformation-action/issues/116)) ([8232c0e](https://github.com/rudderlabs/rudder-transformation-action/commit/8232c0ea28d23e22001a354a2c850c6ac88243ac))
+* bump the axios dependency ([#91](https://github.com/rudderlabs/rudder-transformation-action/issues/91)) ([40ab889](https://github.com/rudderlabs/rudder-transformation-action/commit/40ab889cc82c9b83a3058560776c3fc5254faa9f))
+* bump the axios dependency to latest 1.11.0 ([#96](https://github.com/rudderlabs/rudder-transformation-action/issues/96)) ([c81ad68](https://github.com/rudderlabs/rudder-transformation-action/commit/c81ad68f5460447ed9dfd409d503b08fc979d9d1))
+* migrate from PAT to GitHub App token (SEC-58) ([6e24609](https://github.com/rudderlabs/rudder-transformation-action/commit/6e246093591791c0c079d243b8ed9a8d23842be5))
+* **vuln:** zizmor --fix=all findings (SEC-199) ([7814375](https://github.com/rudderlabs/rudder-transformation-action/commit/78143753f87281cb387bff8b1e56520756c71fc2))
+
 ## [1.1.4](https://github.com/rudderlabs/rudder-transformation-action/compare/v1.1.3...v1.1.4) (2025-02-10)
 
 
